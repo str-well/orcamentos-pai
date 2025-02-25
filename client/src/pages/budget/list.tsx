@@ -55,42 +55,31 @@ export default function BudgetList() {
   });
 
   const generatePDF = async (budget: Budget) => {
-    // This is a simplified PDF generation
-    // In a real app, you'd want to use a proper PDF library
-    const content = `
-      Budget for ${budget.clientName}
-      Address: ${budget.clientAddress}, ${budget.clientCity}
-      Contact: ${budget.clientContact}
-      
-      Services:
-      ${budget.services
-        .map(
-          (s) =>
-            `${s.name}: ${s.quantity} x $${s.unitPrice} = $${s.total}`
-        )
-        .join("\n")}
-      
-      Materials:
-      ${budget.materials
-        .map(
-          (m) =>
-            `${m.name}: ${m.quantity} x $${m.unitPrice} = $${m.total}`
-        )
-        .join("\n")}
-      
-      Labor Cost: $${budget.laborCost}
-      Total Cost: $${budget.totalCost}
-    `;
+    try {
+      const response = await fetch(`/api/budgets/${budget.id}/pdf`, {
+        credentials: 'include'
+      });
 
-    const blob = new Blob([content], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `budget-${budget.id}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+      if (!response.ok) {
+        throw new Error('Failed to generate PDF');
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `orcamento-${budget.id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível gerar o PDF",
+        variant: "destructive",
+      });
+    }
   };
 
   if (isLoading) {

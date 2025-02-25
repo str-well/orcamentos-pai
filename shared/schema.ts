@@ -23,13 +23,13 @@ export const budgets = pgTable("budgets", {
     quantity: number;
     unitPrice: number;
     total: number;
-  }>>(),
+  }>>().default([]),
   materials: json("materials").$type<Array<{
     name: string;
     quantity: number;
     unitPrice: number;
     total: number;
-  }>>(),
+  }>>().default([]),
   laborCost: text("labor_cost").notNull(),
   totalCost: text("total_cost").notNull(),
   status: text("status").notNull().default('pending'),

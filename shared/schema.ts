@@ -30,8 +30,8 @@ export const budgets = pgTable("budgets", {
     unitPrice: number;
     total: number;
   }>>(),
-  laborCost: decimal("labor_cost").notNull(),
-  totalCost: decimal("total_cost").notNull(),
+  laborCost: text("labor_cost").notNull(),
+  totalCost: text("total_cost").notNull(),
   status: text("status").notNull().default('pending'),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
@@ -45,6 +45,9 @@ export const insertBudgetSchema = createInsertSchema(budgets).omit({
   id: true,
   createdAt: true,
   userId: true,
+}).extend({
+  laborCost: z.coerce.string(),
+  totalCost: z.coerce.string(),
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;

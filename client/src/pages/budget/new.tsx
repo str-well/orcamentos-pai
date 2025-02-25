@@ -31,6 +31,8 @@ type BudgetFormData = Omit<InsertBudget, 'services' | 'materials'> & {
     unitPrice: number;
     total?: number;
   }>;
+  laborCost: string;
+  totalCost: string;
 };
 
 export default function NewBudget() {
@@ -49,8 +51,8 @@ export default function NewBudget() {
       date: new Date().toISOString(),
       services: [],
       materials: [],
-      laborCost: 0,
-      totalCost: 0,
+      laborCost: "0",
+      totalCost: "0",
     },
   });
 
@@ -95,7 +97,7 @@ export default function NewBudget() {
       (sum, item) => sum + (item.quantity * item.unitPrice || 0),
       0
     );
-    const laborCost = parseFloat(data.laborCost.toString()) || 0;
+    const laborCost = parseFloat(data.laborCost) || 0;
 
     return {
       ...data,
@@ -107,7 +109,8 @@ export default function NewBudget() {
         ...m,
         total: (m.quantity * m.unitPrice) || 0,
       })),
-      totalCost: servicesTotal + materialsTotal + laborCost,
+      laborCost: laborCost.toString(),
+      totalCost: (servicesTotal + materialsTotal + laborCost).toString(),
     };
   };
 
@@ -304,10 +307,13 @@ export default function NewBudget() {
             <div className="space-y-2">
               <Label htmlFor="laborCost">Custo de Mão de Obra</Label>
               <Input
-                {...form.register("laborCost", {
-                  valueAsNumber: true,
-                })}
+                {...form.register("laborCost")}
                 type="number"
+                step="0.01"
+                onChange={(e) => {
+                  const value = e.target.value;
+                  form.setValue("laborCost", value);
+                }}
               />
               {form.formState.errors.laborCost && (
                 <p className="text-sm text-red-500">

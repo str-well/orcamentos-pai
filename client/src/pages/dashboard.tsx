@@ -50,7 +50,7 @@ export default function Dashboard() {
               <Link href="/budgets">View All Budgets</Link>
             </Button>
             <Button asChild>
-              <Link href="/budgets/new">
+              <Link href="budgets/new">
                 <Plus className="h-4 w-4 mr-2" />
                 New Budget
               </Link>

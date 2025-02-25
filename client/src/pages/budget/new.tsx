@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray } from "react-hook-form";
-import { insertBudgetSchema } from "@shared/schema";
+import { insertBudgetSchema, type InsertBudget } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -18,11 +18,26 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 
+type BudgetFormData = Omit<InsertBudget, 'services' | 'materials'> & {
+  services: Array<{
+    name: string;
+    quantity: number;
+    unitPrice: number;
+    total?: number;
+  }>;
+  materials: Array<{
+    name: string;
+    quantity: number;
+    unitPrice: number;
+    total?: number;
+  }>;
+};
+
 export default function NewBudget() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
-  const form = useForm({
+  const form = useForm<BudgetFormData>({
     resolver: zodResolver(insertBudgetSchema),
     defaultValues: {
       clientName: "",
@@ -50,44 +65,45 @@ export default function NewBudget() {
   });
 
   const createBudgetMutation = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: BudgetFormData) => {
       const res = await apiRequest("POST", "/api/budgets", data);
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/budgets"] });
       toast({
-        title: "Success",
-        description: "Budget created successfully",
+        title: "Sucesso",
+        description: "Orçamento criado com sucesso",
       });
       setLocation("/budgets");
     },
     onError: (error: Error) => {
       toast({
-        title: "Error",
+        title: "Erro",
         description: error.message,
         variant: "destructive",
       });
     },
   });
 
-  const calculateTotals = (data: any) => {
+  const calculateTotals = (data: BudgetFormData): BudgetFormData => {
     const servicesTotal = data.services.reduce(
-      (sum: number, item: any) => sum + (item.quantity * item.unitPrice || 0),
+      (sum, item) => sum + (item.quantity * item.unitPrice || 0),
       0
     );
     const materialsTotal = data.materials.reduce(
-      (sum: number, item: any) => sum + (item.quantity * item.unitPrice || 0),
+      (sum, item) => sum + (item.quantity * item.unitPrice || 0),
       0
     );
-    const laborCost = parseFloat(data.laborCost) || 0;
+    const laborCost = parseFloat(data.laborCost.toString()) || 0;
+
     return {
       ...data,
-      services: data.services.map((s: any) => ({
+      services: data.services.map((s) => ({
         ...s,
         total: (s.quantity * s.unitPrice) || 0,
       })),
-      materials: data.materials.map((m: any) => ({
+      materials: data.materials.map((m) => ({
         ...m,
         total: (m.quantity * m.unitPrice) || 0,
       })),
@@ -99,86 +115,122 @@ export default function NewBudget() {
     <div className="min-h-screen bg-gray-50 p-4">
       <Card>
         <CardHeader>
-          <CardTitle>Create New Budget</CardTitle>
+          <CardTitle>Criar Novo Orçamento</CardTitle>
         </CardHeader>
         <CardContent>
           <form
             onSubmit={form.handleSubmit((data) => {
-              createBudgetMutation.mutate(calculateTotals(data));
+              const formattedData = calculateTotals(data);
+              console.log('Submitting data:', formattedData);
+              createBudgetMutation.mutate(formattedData);
             })}
             className="space-y-8"
           >
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="clientName">Client Name</Label>
+                <Label htmlFor="clientName">Nome do Cliente</Label>
                 <Input {...form.register("clientName")} />
+                {form.formState.errors.clientName && (
+                  <p className="text-sm text-red-500">
+                    {form.formState.errors.clientName.message}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="clientContact">Contact Info</Label>
+                <Label htmlFor="clientContact">Contato</Label>
                 <Input {...form.register("clientContact")} />
+                {form.formState.errors.clientContact && (
+                  <p className="text-sm text-red-500">
+                    {form.formState.errors.clientContact.message}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="clientAddress">Address</Label>
+                <Label htmlFor="clientAddress">Endereço</Label>
                 <Input {...form.register("clientAddress")} />
+                {form.formState.errors.clientAddress && (
+                  <p className="text-sm text-red-500">
+                    {form.formState.errors.clientAddress.message}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="clientCity">City</Label>
+                <Label htmlFor="clientCity">Cidade</Label>
                 <Input {...form.register("clientCity")} />
+                {form.formState.errors.clientCity && (
+                  <p className="text-sm text-red-500">
+                    {form.formState.errors.clientCity.message}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="workLocation">Work Location</Label>
+                <Label htmlFor="workLocation">Local do Trabalho</Label>
                 <Select
                   onValueChange={(value) =>
                     form.setValue("workLocation", value)
                   }
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select location type" />
+                    <SelectValue placeholder="Selecione o tipo de local" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="apartment">Apartment</SelectItem>
-                    <SelectItem value="house">House</SelectItem>
-                    <SelectItem value="commercial">Commercial</SelectItem>
+                    <SelectItem value="apartment">Apartamento</SelectItem>
+                    <SelectItem value="house">Casa</SelectItem>
+                    <SelectItem value="commercial">Comercial</SelectItem>
                   </SelectContent>
                 </Select>
+                {form.formState.errors.workLocation && (
+                  <p className="text-sm text-red-500">
+                    {form.formState.errors.workLocation.message}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="serviceType">Service Type</Label>
+                <Label htmlFor="serviceType">Tipo de Serviço</Label>
                 <Select
                   onValueChange={(value) =>
                     form.setValue("serviceType", value)
                   }
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select service type" />
+                    <SelectValue placeholder="Selecione o tipo de serviço" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="electrical">Electrical</SelectItem>
-                    <SelectItem value="plumbing">Plumbing</SelectItem>
-                    <SelectItem value="construction">Construction</SelectItem>
+                    <SelectItem value="electrical">Elétrica</SelectItem>
+                    <SelectItem value="plumbing">Hidráulica</SelectItem>
+                    <SelectItem value="construction">Construção</SelectItem>
                   </SelectContent>
                 </Select>
+                {form.formState.errors.serviceType && (
+                  <p className="text-sm text-red-500">
+                    {form.formState.errors.serviceType.message}
+                  </p>
+                )}
               </div>
             </div>
 
             <div>
-              <Label>Services</Label>
+              <Label>Serviços</Label>
               <div className="space-y-4">
                 {services.fields.map((field, index) => (
                   <div key={field.id} className="flex gap-4">
                     <Input
-                      {...form.register(`services.${index}.name`)}
-                      placeholder="Service name"
+                      {...form.register(`services.${index}.name` as const)}
+                      placeholder="Nome do serviço"
                     />
                     <Input
-                      {...form.register(`services.${index}.quantity`)}
+                      {...form.register(`services.${index}.quantity` as const, {
+                        valueAsNumber: true,
+                      })}
                       type="number"
-                      placeholder="Quantity"
+                      placeholder="Quantidade"
                     />
                     <Input
-                      {...form.register(`services.${index}.unitPrice`)}
+                      {...form.register(`services.${index}.unitPrice` as const, {
+                        valueAsNumber: true,
+                      })}
                       type="number"
-                      placeholder="Unit price"
+                      placeholder="Preço unitário"
                     />
                     <Button
                       type="button"
@@ -198,29 +250,33 @@ export default function NewBudget() {
                   }
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Service
+                  Adicionar Serviço
                 </Button>
               </div>
             </div>
 
             <div>
-              <Label>Materials</Label>
+              <Label>Materiais</Label>
               <div className="space-y-4">
                 {materials.fields.map((field, index) => (
                   <div key={field.id} className="flex gap-4">
                     <Input
-                      {...form.register(`materials.${index}.name`)}
-                      placeholder="Material name"
+                      {...form.register(`materials.${index}.name` as const)}
+                      placeholder="Nome do material"
                     />
                     <Input
-                      {...form.register(`materials.${index}.quantity`)}
+                      {...form.register(`materials.${index}.quantity` as const, {
+                        valueAsNumber: true,
+                      })}
                       type="number"
-                      placeholder="Quantity"
+                      placeholder="Quantidade"
                     />
                     <Input
-                      {...form.register(`materials.${index}.unitPrice`)}
+                      {...form.register(`materials.${index}.unitPrice` as const, {
+                        valueAsNumber: true,
+                      })}
                       type="number"
-                      placeholder="Unit price"
+                      placeholder="Preço unitário"
                     />
                     <Button
                       type="button"
@@ -240,17 +296,24 @@ export default function NewBudget() {
                   }
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Material
+                  Adicionar Material
                 </Button>
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="laborCost">Labor Cost</Label>
+              <Label htmlFor="laborCost">Custo de Mão de Obra</Label>
               <Input
-                {...form.register("laborCost")}
+                {...form.register("laborCost", {
+                  valueAsNumber: true,
+                })}
                 type="number"
               />
+              {form.formState.errors.laborCost && (
+                <p className="text-sm text-red-500">
+                  {form.formState.errors.laborCost.message}
+                </p>
+              )}
             </div>
 
             <div className="flex justify-end gap-4">
@@ -259,7 +322,7 @@ export default function NewBudget() {
                 variant="outline"
                 onClick={() => setLocation("/budgets")}
               >
-                Cancel
+                Cancelar
               </Button>
               <Button
                 type="submit"
@@ -268,7 +331,7 @@ export default function NewBudget() {
                 {createBudgetMutation.isPending && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
-                Create Budget
+                Criar Orçamento
               </Button>
             </div>
           </form>

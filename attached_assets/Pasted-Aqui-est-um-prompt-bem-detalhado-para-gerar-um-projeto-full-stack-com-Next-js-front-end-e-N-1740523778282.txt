@@ -1,0 +1,116 @@
+Aqui está um prompt bem detalhado para gerar um projeto full-stack com **Next.js (front-end)** e **NestJS (back-end)**, com base no seu escopo:
+
+---
+
+### **Prompt para Criação do Sistema de Orçamentos**
+
+**Objetivo:**  
+Criar um sistema de orçamentos para empresas que prestam serviços, permitindo a gestão financeira através de dashboards, criação e edição de orçamentos, e geração de PDFs para impressão ou envio.
+
+**Tecnologias:**  
+- **Front-end:** Next.js com Chakra UI ou DaisyUI (você pode escolher).
+- **Back-end:** NestJS.
+- **Banco de Dados:** PostgreSQL/MySQL (escolha sua preferência).
+- **Autenticação:** JWT (opcional, caso queira login).
+- **Responsividade:** Sim, deve funcionar bem em desktop e mobile.
+- **Exportação de PDF:** Implementação de um sistema de geração de PDFs formatados.
+
+---
+
+## **Funcionalidades Principais**
+
+### **1️⃣ Página de Dashboard**
+📌 **Objetivo:** Exibir estatísticas e métricas úteis para a empresa.  
+📌 **Componentes:**
+- **Gráficos:** Últimos orçamentos, orçamentos do mês, orçamentos anuais.
+- **Tabela:** Lista dos últimos orçamentos criados com valores e status.
+- **Filtros:** Filtragem por data, cliente e valores.
+- **Cards:** Valores totais de orçamentos criados, aprovados e recusados.
+
+🔹 **Tecnologias a serem usadas:**
+- Recharts ou ApexCharts para gráficos.
+- Chakra UI ou DaisyUI para UI.
+- React Query para gerenciamento de estados assíncronos.
+
+---
+
+### **2️⃣ Página de Criação de Orçamentos**
+📌 **Objetivo:** Criar novos orçamentos com todas as informações necessárias.  
+📌 **Campos a serem preenchidos:**  
+✔ Nome do contratante  
+✔ Endereço do contratante  
+✔ Cidade  
+✔ Contato (telefone, e-mail)  
+✔ Local do trabalho (Apartamento, Casa, Condomínio, etc.)  
+✔ Serviços prestados (Elétrica, Hidráulica, Alvenaria, etc.)  
+✔ Data do orçamento  
+✔ **Tabela de Serviços:** Nome do serviço, quantidade, valor unitário, valor total.  
+✔ **Mão de Obra:** Valor total da mão de obra.  
+✔ **Tabela de Materiais:** Nome do material, quantidade, valor unitário, valor total.  
+✔ **Valor total do orçamento:** Somatório de todos os valores.
+
+📌 **Funcionalidades Extras:**  
+✅ Salvamento no banco de dados.  
+✅ Edição de orçamentos criados.  
+✅ **Geração de PDF formatado bonito**, com logo e layout profissional.  
+✅ Botão de “Salvar e Finalizar” para registrar no banco de dados.
+
+---
+
+### **3️⃣ Página de Visualização de Orçamentos**
+📌 **Objetivo:** Mostrar uma listagem de todos os orçamentos criados.  
+📌 **Componentes:**  
+- **Tabela:** Lista com colunas de **Cliente, Data, Valor Total, Status**.  
+- **Filtros:**  
+  - Por cliente  
+  - Por data  
+  - Por status (pendente, aprovado, recusado)  
+- **Ações:**  
+  - Visualizar orçamento  
+  - Editar orçamento  
+  - Baixar orçamento em PDF  
+
+---
+
+## **🛠 Estrutura do Projeto**
+
+### **📌 Backend (NestJS)**
+📂 **Módulos principais:**  
+- **AuthModule** (se precisar de login)  
+- **OrçamentosModule** (CRUD de orçamentos)  
+- **ClientesModule** (CRUD de clientes)  
+- **RelatóriosModule** (Geração de PDFs e estatísticas)  
+
+📂 **Endpoints esperados:**  
+- `POST /orcamentos` → Criar um novo orçamento  
+- `GET /orcamentos` → Listar todos os orçamentos  
+- `GET /orcamentos/:id` → Obter um orçamento específico  
+- `PUT /orcamentos/:id` → Editar um orçamento  
+- `DELETE /orcamentos/:id` → Excluir um orçamento  
+- `GET /orcamentos/pdf/:id` → Gerar um PDF do orçamento  
+
+### **📌 Frontend (Next.js + UI Library)**
+📂 **Páginas:**  
+- `/dashboard` → Página inicial com gráficos e métricas.  
+- `/orcamentos/novo` → Criar um orçamento.  
+- `/orcamentos` → Listar e filtrar orçamentos.  
+
+📂 **Componentes reutilizáveis:**  
+✔ Input de formulário com validação  
+✔ Tabela de serviços e materiais dinâmica  
+✔ Botão de exportação para PDF  
+
+---
+
+## **🔗 Extras**
+- **PDFKit ou Puppeteer** para geração de PDFs bonitos.  
+- **Prisma ORM** para facilitar o gerenciamento do banco de dados.  
+- **Zod ou Yup** para validação de dados no front e back.  
+- **React Hook Form** para otimizar formulários no front-end.  
+
+---
+
+### **🚀 Resumo**
+Este sistema vai permitir que qualquer empresa organize seus orçamentos com eficiência, tendo estatísticas claras no dashboard, um fluxo simplificado para criar e editar orçamentos, e um sistema de exportação de PDFs profissional.  
+
+Agora é só implementar! 🚀

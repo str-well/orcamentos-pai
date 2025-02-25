@@ -1,8 +1,11 @@
-import { users, type User, type InsertUser, type Budget, type InsertBudget } from "@shared/schema";
+import { users, budgets, type User, type InsertUser, type Budget, type InsertBudget } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 import session from "express-session";
-import createMemoryStore from "memorystore";
+import connectPg from "connect-pg-simple";
+import { pool } from "./db";
 
-const MemoryStore = createMemoryStore(session);
+const PostgresSessionStore = connectPg(session);
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -15,73 +18,60 @@ export interface IStorage {
   sessionStore: session.Store;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private budgets: Map<number, Budget>;
-  private currentUserId: number;
-  private currentBudgetId: number;
+export class DatabaseStorage implements IStorage {
   sessionStore: session.Store;
 
   constructor() {
-    this.users = new Map();
-    this.budgets = new Map();
-    this.currentUserId = 1;
-    this.currentBudgetId = 1;
-    this.sessionStore = new MemoryStore({
-      checkPeriod: 86400000,
+    this.sessionStore = new PostgresSessionStore({
+      pool,
+      createTableIfMissing: true,
     });
   }
 
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentUserId++;
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
+    const [user] = await db.insert(users).values(insertUser).returning();
     return user;
   }
 
   async getBudgetsByUserId(userId: number): Promise<Budget[]> {
-    return Array.from(this.budgets.values()).filter(
-      (budget) => budget.userId === userId,
-    );
+    return await db.select().from(budgets).where(eq(budgets.userId, userId));
   }
 
   async getBudget(id: number): Promise<Budget | undefined> {
-    return this.budgets.get(id);
+    const [budget] = await db.select().from(budgets).where(eq(budgets.id, id));
+    return budget;
   }
 
   async createBudget(budget: InsertBudget & { userId: number }): Promise<Budget> {
-    const id = this.currentBudgetId++;
-    const newBudget: Budget = {
+    const [newBudget] = await db.insert(budgets).values({
       ...budget,
-      id,
+      date: new Date(budget.date),
       createdAt: new Date(),
-      status: 'pending',
-    };
-    this.budgets.set(id, newBudget);
+    }).returning();
     return newBudget;
   }
 
   async updateBudgetStatus(
     id: number,
-    status: 'pending' | 'approved' | 'rejected',
+    status: 'pending' | 'approved' | 'rejected'
   ): Promise<Budget | undefined> {
-    const budget = this.budgets.get(id);
-    if (!budget) return undefined;
-    
-    const updatedBudget = { ...budget, status };
-    this.budgets.set(id, updatedBudget);
-    return updatedBudget;
+    const [budget] = await db
+      .update(budgets)
+      .set({ status })
+      .where(eq(budgets.id, id))
+      .returning();
+    return budget;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();

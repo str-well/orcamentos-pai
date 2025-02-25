@@ -18,13 +18,13 @@ export const budgets = pgTable("budgets", {
   workLocation: text("work_location").notNull(),
   serviceType: text("service_type").notNull(),
   date: timestamp("date").notNull(),
-  services: json("services").notNull().$type<Array<{
+  services: json("services").$type<Array<{
     name: string;
     quantity: number;
     unitPrice: number;
     total: number;
   }>>(),
-  materials: json("materials").notNull().$type<Array<{
+  materials: json("materials").$type<Array<{
     name: string;
     quantity: number;
     unitPrice: number;

@@ -16,16 +16,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
 
   const loginMutation = useMutation({
-    mutationFn: async (data: { username: string; password: string }) => {
-      const { error } = await signIn(data.username, data.password);
+    mutationFn: async (data: { email: string; password: string }) => {
+      const { error } = await signIn(data.email, data.password);
       if (error) throw error;
+    },
+    onSuccess: () => {
+      window.location.href = '/';
     }
   });
 
   const registerMutation = useMutation({
-    mutationFn: async (data: { username: string; password: string }) => {
-      const { error } = await signUp(data.username, data.password);
+    mutationFn: async (data: { email: string; password: string }) => {
+      const { error } = await signUp(data.email, data.password);
       if (error) throw error;
+    },
+    onSuccess: () => {
+      window.location.href = '/';
     }
   });
 

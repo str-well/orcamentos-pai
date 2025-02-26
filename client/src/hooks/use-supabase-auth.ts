@@ -21,13 +21,27 @@ export function useSupabaseAuth() {
     return () => subscription.unsubscribe();
   }, []);
 
+  const signIn = async (email: string, password: string) => {
+    const result = await supabase.auth.signInWithPassword({ email, password });
+    if (result.data.user) {
+      setUser(result.data.user);
+    }
+    return result;
+  };
+
+  const signUp = async (email: string, password: string) => {
+    const result = await supabase.auth.signUp({ email, password });
+    if (result.data.user) {
+      setUser(result.data.user);
+    }
+    return result;
+  };
+
   return {
     user,
     loading,
-    signIn: (email: string, password: string) => 
-      supabase.auth.signInWithPassword({ email, password }),
-    signUp: (email: string, password: string) => 
-      supabase.auth.signUp({ email, password }),
+    signIn,
+    signUp,
     signOut: () => supabase.auth.signOut()
   };
 } 

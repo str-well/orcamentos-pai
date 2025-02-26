@@ -12,6 +12,7 @@ import { Redirect } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { FieldValues } from "react-hook-form";
 import { useSupabaseAuth } from '@/hooks/use-supabase-auth';
+import { z } from 'zod';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -47,22 +48,28 @@ const floatingIconVariants = {
   }
 };
 
-// Defina a interface LoginData
+// Atualize a interface LoginData
 interface LoginData {
-  username: string;
+  email: string;    // mudado de username para email
   password: string;
 }
+
+// Crie um schema de validação
+const loginSchema = z.object({
+  email: z.string().email('Email inválido'),
+  password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres')
+});
 
 export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
   const { signIn, signUp } = useSupabaseAuth();
 
   const loginForm = useForm({
-    resolver: zodResolver(insertUserSchema),
+    resolver: zodResolver(loginSchema),
   });
 
   const registerForm = useForm({
-    resolver: zodResolver(insertUserSchema),
+    resolver: zodResolver(loginSchema),
   });
 
   if (user) {
@@ -71,7 +78,7 @@ export default function AuthPage() {
 
   const handleLogin = async (data: LoginData) => {
     try {
-      const { error } = await signIn(data.username, data.password);
+      const { error } = await signIn(data.email, data.password);
       if (error) throw error;
     } catch (error) {
       console.error('Erro no login:', error);
@@ -81,7 +88,7 @@ export default function AuthPage() {
 
   const handleRegister = async (data: LoginData) => {
     try {
-      const { error } = await signUp(data.username, data.password);
+      const { error } = await signUp(data.email, data.password);
       if (error) throw error;
     } catch (error) {
       console.error('Erro no registro:', error);
@@ -139,15 +146,13 @@ export default function AuthPage() {
                             className="space-y-6"
                           >
                             <motion.div variants={itemVariants} className="space-y-2">
-                              <Label htmlFor="username" className="text-base">
-                                Usuário
-                              </Label>
+                              <Label htmlFor="email">Email</Label>
                               <div className="relative group">
                                 <User className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground transition-colors group-hover:text-primary" />
                                 <Input
-                                  {...loginForm.register("username")}
-                                  className="pl-10 h-12 transition-all border-2 group-hover:border-primary"
-                                  placeholder="Digite seu usuário"
+                                  {...loginForm.register("email")}
+                                  type="email"
+                                  placeholder="Digite seu email"
                                 />
                               </div>
                             </motion.div>
@@ -215,15 +220,13 @@ export default function AuthPage() {
                             className="space-y-6"
                           >
                             <motion.div variants={itemVariants} className="space-y-2">
-                              <Label htmlFor="username" className="text-base">
-                                Usuário
-                              </Label>
+                              <Label htmlFor="email">Email</Label>
                               <div className="relative group">
                                 <User className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground transition-colors group-hover:text-primary" />
                                 <Input
-                                  {...registerForm.register("username")}
-                                  className="pl-10 h-12 transition-all border-2 group-hover:border-primary"
-                                  placeholder="Escolha seu usuário"
+                                  {...registerForm.register("email")}
+                                  type="email"
+                                  placeholder="Digite seu email"
                                 />
                               </div>
                             </motion.div>

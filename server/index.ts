@@ -1,10 +1,19 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import session from "express-session";
+import { db } from './db';
+import { sql } from 'drizzle-orm';
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+app.use(session({
+  secret: process.env.SESSION_SECRET!,
+  resave: false,
+  saveUninitialized: false,
+}) as unknown as express.RequestHandler);
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -67,4 +76,12 @@ app.use((req, res, next) => {
   }, () => {
     log(`serving on port ${port}`);
   });
+
+  try {
+    // Tenta fazer uma query simples
+    const result = await db.execute(sql`SELECT 1`);
+    console.log('Conexão com banco de dados estabelecida com sucesso!');
+  } catch (error) {
+    console.error('Erro ao conectar com banco de dados:', error);
+  }
 })();

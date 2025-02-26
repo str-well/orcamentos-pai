@@ -4,6 +4,7 @@ import express from 'express';
 import session from 'express-session';
 import { storage } from '../server/storage';
 import cors from 'cors';
+import { supabase } from '../server/supabase';
 
 const app = express();
 
@@ -35,6 +36,56 @@ app.use(express.json());
 
 // Registra as rotas da API
 await registerRoutes(app);
+
+app.put('/api/budgets/:id/status', async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  // Verifique se o status é válido
+  if (!['pending', 'approved', 'rejected'].includes(status)) {
+    return res.status(400).json({ error: 'Status inválido' });
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('budgets')
+      .update({ status })
+      .eq('id', id)
+      .single();
+
+    if (error) throw error;
+
+    return res.json(data);
+  } catch (error) {
+    console.error('Erro ao atualizar status do orçamento:', error);
+    return res.status(500).json({ error: 'Erro ao atualizar status do orçamento' });
+  }
+});
+
+app.get('/api/budgets/:id/pdf', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const { data: budget, error } = await supabase
+      .from('budgets')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error || !budget) {
+      return res.status(404).json({ error: 'Orçamento não encontrado' });
+    }
+
+    // Lógica para gerar o PDF
+    const pdfBuffer = await generatePDF(budget); // Implemente a função de geração de PDF
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.send(pdfBuffer);
+  } catch (error) {
+    console.error('Erro ao gerar PDF:', error);
+    return res.status(500).json({ error: 'Erro ao gerar PDF' });
+  }
+});
 
 export const config = {
   api: {

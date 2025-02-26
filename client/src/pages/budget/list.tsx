@@ -373,7 +373,7 @@ export default function BudgetList() {
                     <div>
                       <h2 className="text-2xl font-bold">Orçamento #{selectedBudget.id}</h2>
                       <p className="text-sm text-gray-500">
-                        Criado em {formatDateTime(selectedBudget.createdAt)}
+                        Criado em {selectedBudget.created_at ? new Date(selectedBudget.created_at).toLocaleString('pt-BR') : 'Data não disponível'}
                       </p>
                     </div>
                     <div className="text-right">

@@ -3,7 +3,7 @@ import { db } from "./db";
 import { eq } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
-import { pool } from "./db";
+import { client } from "./db";
 
 const PostgresSessionStore = connectPg(session);
 
@@ -23,7 +23,7 @@ export class DatabaseStorage implements IStorage {
 
   constructor() {
     this.sessionStore = new PostgresSessionStore({
-      pool,
+      pool: client,
       createTableIfMissing: true,
       tableName: 'user_sessions',
       pruneSessionInterval: 60
@@ -81,13 +81,22 @@ export class DatabaseStorage implements IStorage {
 
   async createBudget(budget: InsertBudget & { userId: number }): Promise<Budget> {
     try {
-      const [newBudget] = await db.insert(budgets).values({
-        ...budget,
-        date: new Date(budget.date),
-        createdAt: new Date(),
+      const [newBudget] = await db.insert(budgets).values([{
+        userId: budget.userId,
+        clientName: budget.clientName,
+        clientAddress: budget.clientAddress,
+        clientCity: budget.clientCity,
+        clientContact: budget.clientContact,
+        workLocation: budget.workLocation,
+        serviceType: budget.serviceType,
+        date: budget.date,
         services: budget.services || [],
-        materials: budget.materials || []
-      }).returning();
+        materials: budget.materials || [],
+        laborCost: budget.laborCost,
+        totalCost: budget.totalCost,
+        status: 'pending',
+        createdAt: new Date()
+      }]).returning();
       return newBudget;
     } catch (error) {
       console.error('Error creating budget:', error);

@@ -17,7 +17,7 @@ export const budgets = pgTable("budgets", {
   clientContact: text("client_contact").notNull(),
   workLocation: text("work_location").notNull(),
   serviceType: text("service_type").notNull(),
-  date: timestamp("date").notNull(),
+  date: text("date").notNull(),
   services: json("services").$type<Array<{
     name: string;
     quantity: number;
@@ -46,6 +46,7 @@ export const insertBudgetSchema = createInsertSchema(budgets).omit({
   createdAt: true,
   userId: true,
 }).extend({
+  date: z.string(),
   laborCost: z.coerce.string(),
   totalCost: z.coerce.string(),
 });

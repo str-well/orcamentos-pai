@@ -74,7 +74,14 @@ export class DatabaseStorage implements IStorage {
 
   async getBudgetsByUserId(userId: number): Promise<Budget[]> {
     try {
-      return await db.select().from(budgets).where(eq(budgets.userId, userId));
+      const results = await db.select().from(budgets).where(eq(budgets.userId, userId));
+      
+      // Garantir que services e materials nunca são null
+      return results.map(budget => ({
+        ...budget,
+        services: budget.services || [],
+        materials: budget.materials || []
+      }));
     } catch (error) {
       console.error('Error getting budgets:', error);
       throw new Error('Failed to get budgets');
@@ -84,7 +91,15 @@ export class DatabaseStorage implements IStorage {
   async getBudget(id: number): Promise<Budget | undefined> {
     try {
       const [budget] = await db.select().from(budgets).where(eq(budgets.id, id));
-      return budget;
+      
+      if (!budget) return undefined;
+
+      // Garantir que services e materials nunca são null
+      return {
+        ...budget,
+        services: budget.services || [],
+        materials: budget.materials || []
+      };
     } catch (error) {
       console.error('Error getting budget:', error);
       throw new Error('Failed to get budget');
@@ -93,41 +108,31 @@ export class DatabaseStorage implements IStorage {
 
   async createBudget(budget: InsertBudget & { userId: number }): Promise<Budget> {
     try {
-      const budgetData = {
-        userId: budget.userId,
-        clientName: budget.clientName,
-        clientAddress: budget.clientAddress,
-        clientCity: budget.clientCity,
-        clientContact: budget.clientContact,
-        workLocation: budget.workLocation,
-        serviceType: budget.serviceType,
-        date: budget.date,
-        services: sql`${JSON.stringify(budget.services || [])}::jsonb`,
-        materials: sql`${JSON.stringify(budget.materials || [])}::jsonb`,
-        laborCost: String(budget.laborCost),
-        totalCost: String(budget.totalCost),
-        status: 'pending' as const,
-        createdAt: new Date()
-      };
-
-      const [newBudget] = await db.insert(budgets)
-        .values(budgetData)
+      const [newBudget] = await db
+        .insert(budgets)
+        .values({
+          userId: budget.userId,
+          clientName: budget.clientName,
+          clientAddress: budget.clientAddress,
+          clientCity: budget.clientCity,
+          clientContact: budget.clientContact,
+          workLocation: budget.workLocation,
+          serviceType: budget.serviceType,
+          date: budget.date,
+          services: sql`${JSON.stringify(budget.services || [])}::jsonb`,
+          materials: sql`${JSON.stringify(budget.materials || [])}::jsonb`,
+          laborCost: String(budget.laborCost),
+          totalCost: String(budget.totalCost),
+          status: 'pending'
+        })
         .returning();
 
-      // Converta de volta para objeto ao retornar
+      // Garantir que services e materials nunca são null
       return {
         ...newBudget,
-        services: Array.isArray(newBudget.services) 
-          ? newBudget.services 
-          : typeof newBudget.services === 'string'
-            ? JSON.parse(newBudget.services)
-            : [],
-        materials: Array.isArray(newBudget.materials)
-          ? newBudget.materials
-          : typeof newBudget.materials === 'string'
-            ? JSON.parse(newBudget.materials)
-            : []
-      } as Budget;
+        services: newBudget.services || [],
+        materials: newBudget.materials || []
+      };
     } catch (error) {
       console.error('Error creating budget:', error);
       throw new Error('Failed to create budget');
@@ -144,7 +149,15 @@ export class DatabaseStorage implements IStorage {
         .set({ status })
         .where(eq(budgets.id, id))
         .returning();
-      return budget;
+      
+      if (!budget) return undefined;
+
+      // Garantir que services e materials nunca são null
+      return {
+        ...budget,
+        services: budget.services || [],
+        materials: budget.materials || []
+      };
     } catch (error) {
       console.error('Error updating budget status:', error);
       throw new Error('Failed to update budget status');

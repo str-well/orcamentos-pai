@@ -41,14 +41,32 @@ export const insertUserSchema = createInsertSchema(users).pick({
   password: true,
 });
 
-export const insertBudgetSchema = createInsertSchema(budgets).omit({
-  id: true,
-  createdAt: true,
-  userId: true,
-}).extend({
+export const budgetItemSchema = z.object({
+  name: z.string().min(1, "Nome é obrigatório"),
+  quantity: z.number().min(1, "Quantidade deve ser maior que 0"),
+  unitPrice: z.number().min(0, "Preço deve ser maior ou igual a 0"),
+  total: z.number()
+});
+
+type BudgetItemArray = Array<{
+  name: string;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+}>;
+
+export const insertBudgetSchema = z.object({
+  clientName: z.string().min(1, "Nome do cliente é obrigatório"),
+  clientAddress: z.string().min(1, "Endereço é obrigatório"),
+  clientCity: z.string().min(1, "Cidade é obrigatória"),
+  clientContact: z.string().min(1, "Contato é obrigatório"),
+  workLocation: z.string().min(1, "Local da obra é obrigatório"),
+  serviceType: z.string().min(1, "Tipo de serviço é obrigatório"),
   date: z.string(),
-  laborCost: z.coerce.string(),
-  totalCost: z.coerce.string(),
+  services: z.array(budgetItemSchema),
+  materials: z.array(budgetItemSchema),
+  laborCost: z.string(),
+  totalCost: z.string()
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -58,5 +76,21 @@ export interface User {
   password: string;
   // ... outros campos
 }
-export type Budget = typeof budgets.$inferSelect;
+export type Budget = {
+  id: number;
+  userId: number;
+  clientName: string;
+  clientAddress: string;
+  clientCity: string;
+  clientContact: string;
+  workLocation: string;
+  serviceType: string;
+  date: string;
+  services: BudgetItemArray;
+  materials: BudgetItemArray;
+  laborCost: string;
+  totalCost: string;
+  status: string;
+  createdAt: Date;
+};
 export type InsertBudget = z.infer<typeof insertBudgetSchema>;

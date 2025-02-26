@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/select";
 import { Link } from "wouter";
 import { Loader2, FileText, Plus, Eye } from "lucide-react";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { Header } from "@/components/shared/Header";
@@ -25,6 +25,7 @@ import { CalendarIcon, ChevronsUpDown } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Label } from "@/components/ui/label";
+import { useBudgets } from "@/hooks/use-budgets";
 
 export default function BudgetList() {
   const { toast } = useToast();
@@ -40,9 +41,7 @@ export default function BudgetList() {
   });
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-  const { data: budgets, isLoading } = useQuery<Budget[]>({
-    queryKey: ["/api/budgets"],
-  });
+  const { budgets, isLoading, deleteBudget } = useBudgets();
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({
@@ -52,9 +51,18 @@ export default function BudgetList() {
       id: number;
       status: "approved" | "rejected";
     }) => {
-      const res = await apiRequest("PUT", `/api/budgets/${id}/status`, {
-        status,
+      const res = await fetch(`/api/budgets/${id}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status }),
       });
+
+      if (!res.ok) {
+        throw new Error('Failed to update budget status');
+      }
+
       return res.json();
     },
     onSuccess: () => {

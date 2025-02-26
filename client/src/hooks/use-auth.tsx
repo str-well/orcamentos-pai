@@ -1,7 +1,8 @@
 import { createContext, useContext, ReactNode } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { queryClient } from "@/lib/queryClient";
 import { User } from "@shared/schema";
+import { supabase } from "@/lib/supabase";
 
 interface AuthMutationVariables {
   path: string;
@@ -24,22 +25,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { data: user, isLoading } = useQuery<User | null>({
     queryKey: ["/api/auth/user"],
     queryFn: async () => {
-      try {
-        const res = await apiRequest("GET", "auth/user");
-        return res.json();
-      } catch (error) {
-        if (error instanceof Response && error.status === 401) {
-          return null;
-        }
-        throw error;
-      }
+      const { data: { user } } = await supabase.auth.getUser();
+      return user;
     }
   });
 
   const loginMutation = useMutation({
-    mutationFn: async (variables: AuthMutationVariables) => {
-      const res = await apiRequest("POST", variables.path, variables.data);
-      return res.json();
+    mutationFn: async ({ data }: AuthMutationVariables) => {
+      const { data: result, error } = await supabase.auth.signInWithPassword({
+        email: data.username,
+        password: data.password,
+      });
+      if (error) throw error;
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });

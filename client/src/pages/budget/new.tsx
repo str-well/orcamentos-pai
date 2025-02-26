@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/select";
 import { Loader2, Plus, Trash2, InfoIcon } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { Calendar } from "@/components/ui/calendar";
@@ -30,6 +29,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useBudgets } from "@/hooks/use-budgets";
 
 interface BudgetItem {
   name: string;
@@ -77,6 +77,7 @@ function FieldLabel({ label, tooltip }: { label: string; tooltip: string }) {
 export default function NewBudget() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const { createBudget } = useBudgets();
 
   const form = useForm<BudgetFormData>({
     resolver: zodResolver(insertBudgetSchema),
@@ -107,8 +108,7 @@ export default function NewBudget() {
 
   const createBudgetMutation = useMutation({
     mutationFn: async (data: BudgetFormData) => {
-      const res = await apiRequest("POST", "http://localhost:5000/api/budgets", data);
-      return res.json();
+      await createBudget(data);
     },
     onSuccess: () => {
       toast({
@@ -117,12 +117,13 @@ export default function NewBudget() {
       });
       setLocation("/budgets");
     },
-    onError: (error: Error) => {
+    onError: (error) => {
       toast({
         variant: "destructive",
         title: "Erro!",
-        description: error.message || "Erro ao criar orçamento.",
+        description: "Erro ao criar orçamento. Tente novamente.",
       });
+      console.error("Erro ao criar orçamento:", error);
     },
   });
 
@@ -140,38 +141,8 @@ export default function NewBudget() {
     return { servicesTotal, materialsTotal };
   };
 
-  const onSubmit = async (data: BudgetFormData) => {
-    console.log("Form submitted with data:", data);
-
-    try {
-      const withTotals = calculateTotals(data);
-      console.log("Data with totals:", withTotals);
-
-      const formattedData = {
-        ...data,
-        date: new Date(data.date).toISOString(),
-        services: data.services.map((s) => ({
-          ...s,
-          quantity: Number(s.quantity),
-          unitPrice: Number(s.unitPrice)
-        })),
-        materials: data.materials.map((m) => ({
-          ...m,
-          quantity: Number(m.quantity),
-          unitPrice: Number(m.unitPrice)
-        }))
-      };
-
-      console.log("Sending data:", formattedData);
-      await createBudgetMutation.mutateAsync(formattedData);
-    } catch (error) {
-      console.error("Submit error:", error);
-      toast({
-        title: "Erro",
-        description: "Erro ao criar orçamento",
-        variant: "destructive",
-      });
-    }
+  const onSubmit = (data: BudgetFormData) => {
+    createBudgetMutation.mutate(data);
   };
 
   const formatDate = (date: Date) => {

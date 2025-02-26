@@ -3,9 +3,27 @@ import type { Budget, InsertBudget } from '@shared/schema';
 
 export const budgetsApi = {
   create: async (budget: InsertBudget) => {
+    // Pegar o usuário atual
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) throw new Error('User not authenticated');
+
     const { data, error } = await supabase
       .from('budgets')
-      .insert(budget)
+      .insert({
+        user_id: user.id, // Adicionar o user_id
+        client_name: budget.clientName,
+        client_address: budget.clientAddress,
+        client_city: budget.clientCity,
+        client_contact: budget.clientContact,
+        work_location: budget.workLocation,
+        service_type: budget.serviceType,
+        date: budget.date,
+        services: budget.services,
+        materials: budget.materials,
+        labor_cost: budget.laborCost,
+        total_cost: budget.totalCost
+      })
       .select()
       .single();
 
@@ -14,9 +32,14 @@ export const budgetsApi = {
   },
 
   list: async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) throw new Error('User not authenticated');
+
     const { data, error } = await supabase
       .from('budgets')
-      .select('*');
+      .select('*')
+      .eq('user_id', user.id); // Filtrar por user_id
 
     if (error) throw error;
     return data;

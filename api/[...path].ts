@@ -7,9 +7,9 @@ import cors from 'cors';
 import { supabase } from '../server/supabase';
 import PDFDocument from 'pdfkit';
 
-// Função para gerar PDF
-async function generatePDF(budget) {
-  return new Promise((resolve, reject) => {
+// Função para gerar PDF e salvar no bucket do Supabase
+async function generateAndStorePDF(budget) {
+  return new Promise(async (resolve, reject) => {
     try {
       // Criar um documento PDF
       const doc = new PDFDocument();
@@ -17,7 +17,35 @@ async function generatePDF(budget) {
 
       // Capturar os chunks do PDF
       doc.on('data', (chunk) => chunks.push(chunk));
-      doc.on('end', () => resolve(Buffer.concat(chunks)));
+      
+      doc.on('end', async () => {
+        try {
+          const pdfBuffer = Buffer.concat(chunks);
+          const fileName = `orcamento-${budget.id}.pdf`;
+          
+          // Salvar o PDF no bucket do Supabase
+          const { data, error } = await supabase
+            .storage
+            .from('pdfs')
+            .upload(fileName, pdfBuffer, {
+              contentType: 'application/pdf',
+              upsert: true
+            });
+            
+          if (error) throw error;
+          
+          // Obter a URL pública do PDF
+          const { data: urlData } = supabase
+            .storage
+            .from('pdfs')
+            .getPublicUrl(fileName);
+            
+          resolve(urlData.publicUrl);
+        } catch (error) {
+          reject(error);
+        }
+      });
+      
       doc.on('error', reject);
 
       // Adicionar conteúdo ao PDF
@@ -132,6 +160,7 @@ app.use(express.json());
 // Registra as rotas da API
 await registerRoutes(app);
 
+// Rota para atualizar o status do orçamento
 app.put('/api/budgets/:id/status', async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
@@ -142,9 +171,14 @@ app.put('/api/budgets/:id/status', async (req, res) => {
   }
 
   try {
+    // Atualizar o status no banco de dados
     const { data, error } = await supabase
       .from('budgets')
-      .update({ status })
+      .update({ 
+        status,
+        // Adicionar um campo para rastrear quando o status foi atualizado
+        status_updated_at: new Date().toISOString()
+      })
       .eq('id', id);
 
     if (error) {
@@ -152,17 +186,19 @@ app.put('/api/budgets/:id/status', async (req, res) => {
       return res.status(500).json({ error: 'Erro ao atualizar status do orçamento' });
     }
 
-    return res.json({ success: true });
+    return res.json({ success: true, message: `Status atualizado para ${status}` });
   } catch (error) {
     console.error('Erro ao atualizar status do orçamento:', error);
     return res.status(500).json({ error: 'Erro ao atualizar status do orçamento' });
   }
 });
 
+// Rota para gerar e baixar o PDF
 app.get('/api/budgets/:id/pdf', async (req, res) => {
   const { id } = req.params;
 
   try {
+    // Buscar o orçamento no banco de dados
     const { data: budget, error } = await supabase
       .from('budgets')
       .select('*')
@@ -173,12 +209,41 @@ app.get('/api/budgets/:id/pdf', async (req, res) => {
       return res.status(404).json({ error: 'Orçamento não encontrado' });
     }
 
-    // Gerar o PDF
-    const pdfBuffer = await generatePDF(budget);
+    // Verificar se já existe um PDF para este orçamento
+    const fileName = `orcamento-${budget.id}.pdf`;
+    const { data: existingFile } = await supabase
+      .storage
+      .from('pdfs')
+      .list('', {
+        search: fileName
+      });
 
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename=orcamento-${id}.pdf`);
-    res.send(pdfBuffer);
+    let pdfUrl;
+    
+    // Se o PDF já existe, obter a URL pública
+    if (existingFile && existingFile.length > 0) {
+      const { data: urlData } = supabase
+        .storage
+        .from('pdfs')
+        .getPublicUrl(fileName);
+      
+      pdfUrl = urlData.publicUrl;
+    } else {
+      // Se não existe, gerar e salvar o PDF
+      pdfUrl = await generateAndStorePDF(budget);
+    }
+
+    // Atualizar o orçamento com a URL do PDF
+    await supabase
+      .from('budgets')
+      .update({ 
+        pdf_url: pdfUrl,
+        pdf_generated_at: new Date().toISOString()
+      })
+      .eq('id', id);
+
+    // Redirecionar para a URL do PDF
+    return res.redirect(pdfUrl);
   } catch (error) {
     console.error('Erro ao gerar PDF:', error);
     return res.status(500).json({ error: 'Erro ao gerar PDF' });

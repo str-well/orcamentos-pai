@@ -48,19 +48,8 @@ export default defineConfig({
       jsxImportSource: 'react'
     }
   },
-  server: {
-    proxy: {
-      '/api': {
-        target: process.env.VITE_API_URL || 'http://localhost:3000',
-        changeOrigin: true,
-        secure: false
-      }
-    }
-  },
   define: {
-    'process.env.VITE_API_URL': JSON.stringify(process.env.VERCEL_URL 
-      ? `https://orcamentos-pai.vercel.app`
-      : 'http://localhost:3000'
-    )
+    'process.env.VITE_SUPABASE_URL': JSON.stringify(process.env.SUPABASE_URL),
+    'process.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(process.env.SUPABASE_ANON_KEY)
   }
 });

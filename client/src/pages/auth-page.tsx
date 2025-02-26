@@ -115,8 +115,12 @@ export default function AuthPage() {
                           <form
                             onSubmit={loginForm.handleSubmit((data) =>
                               loginMutation.mutate({
-                                path: 'auth/login',
-                                data: data as LoginData
+                                path: 'auth/v1/token',
+                                data: {
+                                  email: data.username,
+                                  password: data.password,
+                                  grant_type: 'password'
+                                }
                               })
                             )}
                             className="space-y-6"

@@ -1,8 +1,7 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
-const API_URL = import.meta.env.PROD 
-  ? 'https://orcamentos-pai.vercel.app'
-  : 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_SUPABASE_URL;
+const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -18,10 +17,12 @@ async function throwIfResNotOk(res: Response) {
 }
 
 export async function apiRequest(method: string, path: string, data?: any) {
-  const response = await fetch(`${API_URL}/api/${path}`, {
+  const response = await fetch(`${API_URL}/${path}`, {
     method,
     headers: {
       'Content-Type': 'application/json',
+      'apikey': ANON_KEY,
+      'Authorization': `Bearer ${ANON_KEY}`
     },
     body: data ? JSON.stringify(data) : undefined,
     credentials: 'include',

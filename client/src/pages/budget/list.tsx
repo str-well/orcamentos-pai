@@ -290,7 +290,7 @@ export default function BudgetList() {
                           <td className="py-2">#{budget.id}</td>
                           <td className="py-2">{budget.clientName}</td>
                           <td className="py-2">
-                            {formatDateTime(budget.createdAt)}
+                            {budget.created_at ? new Date(budget.created_at).toLocaleString('pt-BR') : 'Data não disponível'}
                           </td>
                           <td className="py-2">{budget.clientCity}</td>
                           <td className="py-2">R$ {budget.totalCost}</td>

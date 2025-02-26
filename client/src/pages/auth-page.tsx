@@ -11,6 +11,7 @@ import { useForm } from "react-hook-form";
 import { Redirect } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { FieldValues } from "react-hook-form";
+import { supabase } from '@/lib/supabase';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -67,6 +68,36 @@ export default function AuthPage() {
     return <Redirect to="/" />;
   }
 
+  const handleLogin = async (data: LoginData) => {
+    try {
+      const { data: authData, error } = await supabase.auth.signInWithPassword({
+        email: data.username,
+        password: data.password,
+      });
+
+      if (error) throw error;
+      return authData;
+    } catch (error) {
+      console.error('Erro no login:', error);
+      throw error;
+    }
+  };
+
+  const handleRegister = async (data: LoginData) => {
+    try {
+      const { data: authData, error } = await supabase.auth.signUp({
+        email: data.username,
+        password: data.password,
+      });
+
+      if (error) throw error;
+      return authData;
+    } catch (error) {
+      console.error('Erro no registro:', error);
+      throw error;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-primary/20 via-background to-primary/10">
       <div className="absolute inset-0 bg-grid-white/10 bg-[size:20px_20px] [mask-image:radial-gradient(white,transparent_90%)]" />
@@ -113,16 +144,7 @@ export default function AuthPage() {
                         </CardHeader>
                         <CardContent>
                           <form
-                            onSubmit={loginForm.handleSubmit((data) =>
-                              loginMutation.mutate({
-                                path: 'auth/v1/token',
-                                data: {
-                                  email: data.username,
-                                  password: data.password,
-                                  grant_type: 'password'
-                                }
-                              })
-                            )}
+                            onSubmit={loginForm.handleSubmit((data) => handleLogin(data))}
                             className="space-y-6"
                           >
                             <motion.div variants={itemVariants} className="space-y-2">
@@ -198,12 +220,7 @@ export default function AuthPage() {
                         </CardHeader>
                         <CardContent>
                           <form
-                            onSubmit={registerForm.handleSubmit((data) =>
-                              registerMutation.mutate({
-                                path: 'register',
-                                data: data as LoginData
-                              })
-                            )}
+                            onSubmit={registerForm.handleSubmit((data) => handleRegister(data))}
                             className="space-y-6"
                           >
                             <motion.div variants={itemVariants} className="space-y-2">

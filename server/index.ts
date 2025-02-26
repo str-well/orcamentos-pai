@@ -4,30 +4,16 @@ import { setupVite, serveStatic, log } from "./vite";
 import session from "express-session";
 import { db } from './db';
 import { sql } from 'drizzle-orm';
-import cors from 'cors';
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Configurar CORS para permitir requisições da Vercel
-app.use(cors({
-  origin: process.env.FRONTEND_URL,
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
-
 app.use(session({
   secret: process.env.SESSION_SECRET!,
   resave: false,
   saveUninitialized: false,
-  cookie: {
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    maxAge: 24 * 60 * 60 * 1000 // 24 horas
-  }
-}));
+}) as unknown as express.RequestHandler);
 
 app.use((req, res, next) => {
   const start = Date.now();

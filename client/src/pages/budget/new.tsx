@@ -90,28 +90,21 @@ export default function NewBudget() {
 
   const createBudgetMutation = useMutation({
     mutationFn: async (data: BudgetFormData) => {
-      console.log('Mutation data:', data);
-      const res = await apiRequest("POST", "/api/budgets", data);
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.message || 'Erro ao criar orçamento');
-      }
+      const res = await apiRequest("POST", "http://localhost:5000/api/budgets", data);
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/budgets"] });
       toast({
-        title: "Sucesso",
-        description: "Orçamento criado com sucesso",
+        title: "Sucesso!",
+        description: "Orçamento criado com sucesso.",
       });
       setLocation("/budgets");
     },
     onError: (error: Error) => {
-      console.error('Mutation error:', error);
       toast({
-        title: "Erro",
-        description: error.message,
         variant: "destructive",
+        title: "Erro!",
+        description: error.message || "Erro ao criar orçamento.",
       });
     },
   });

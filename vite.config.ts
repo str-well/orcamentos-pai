@@ -40,5 +40,11 @@ export default defineConfig({
         changeOrigin: true,
       }
     }
+  },
+  define: {
+    'process.env.VITE_API_URL': JSON.stringify(process.env.VERCEL_URL 
+      ? `https://${process.env.VERCEL_URL}/api`
+      : 'http://localhost:3000/api'
+    )
   }
 });

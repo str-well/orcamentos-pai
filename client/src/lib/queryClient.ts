@@ -1,5 +1,7 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
+const API_URL = import.meta.env.VITE_API_URL || '/api';
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     let errorMessage = res.statusText;
@@ -13,25 +15,21 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
-export async function apiRequest(
-  method: string,
-  url: string,
-  data?: unknown
-): Promise<Response> {
-  try {
-    const res = await fetch(url, {
-      method,
-      headers: data ? { "Content-Type": "application/json" } : {},
-      body: data ? JSON.stringify(data) : undefined,
-      credentials: "include",
-    });
+export async function apiRequest(method: string, path: string, body?: any) {
+  const response = await fetch(`${API_URL}${path}`, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: body ? JSON.stringify(body) : undefined,
+    credentials: 'include'
+  });
 
-    await throwIfResNotOk(res);
-    return res;
-  } catch (error) {
-    console.error('API Request error:', error);
-    throw error;
+  if (!response.ok) {
+    throw new Error(`${response.status}: ${await response.text()}`);
   }
+
+  return response;
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";

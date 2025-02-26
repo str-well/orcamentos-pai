@@ -9,9 +9,9 @@ const app = express();
 
 // Configuração do CORS
 app.use(cors({
-  origin: process.env.VERCEL_URL 
+  origin: process.env.NODE_ENV === 'production'
     ? `https://${process.env.VERCEL_URL}`
-    : 'http://localhost:3000',
+    : 'http://localhost:5173', // porta padrão do Vite
   credentials: true
 }));
 

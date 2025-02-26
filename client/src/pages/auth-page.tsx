@@ -114,7 +114,7 @@ export default function AuthPage() {
                         <CardContent>
                           <form
                             onSubmit={loginForm.handleSubmit((data) =>
-                              loginMutation.mutate(data as LoginData)
+                              loginMutation.mutate('auth/login', data as LoginData)
                             )}
                             className="space-y-6"
                           >
@@ -192,7 +192,7 @@ export default function AuthPage() {
                         <CardContent>
                           <form
                             onSubmit={registerForm.handleSubmit((data) =>
-                              registerMutation.mutate(data as LoginData)
+                              registerMutation.mutate('register', data as LoginData)
                             )}
                             className="space-y-6"
                           >

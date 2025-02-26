@@ -3,9 +3,19 @@ import { db } from "./db";
 import { eq } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
+import { Pool } from 'pg';
 import { client } from "./db";
+import { sql } from 'drizzle-orm';
 
 const PostgresSessionStore = connectPg(session);
+
+// Crie um pool do PostgreSQL
+const pool = new Pool({
+  connectionString: process.env.POSTGRES_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
+});
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -16,6 +26,7 @@ export interface IStorage {
   createBudget(budget: InsertBudget & { userId: number }): Promise<Budget>;
   updateBudgetStatus(id: number, status: 'pending' | 'approved' | 'rejected'): Promise<Budget | undefined>;
   sessionStore: session.Store;
+  generateBudgetPDF(id: number): Promise<Buffer>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -23,7 +34,7 @@ export class DatabaseStorage implements IStorage {
 
   constructor() {
     this.sessionStore = new PostgresSessionStore({
-      pool: client,
+      pool,
       createTableIfMissing: true,
       tableName: 'user_sessions',
       pruneSessionInterval: 60
@@ -81,7 +92,7 @@ export class DatabaseStorage implements IStorage {
 
   async createBudget(budget: InsertBudget & { userId: number }): Promise<Budget> {
     try {
-      const [newBudget] = await db.insert(budgets).values([{
+      const budgetData = {
         userId: budget.userId,
         clientName: budget.clientName,
         clientAddress: budget.clientAddress,
@@ -90,14 +101,32 @@ export class DatabaseStorage implements IStorage {
         workLocation: budget.workLocation,
         serviceType: budget.serviceType,
         date: budget.date,
-        services: budget.services || [],
-        materials: budget.materials || [],
-        laborCost: budget.laborCost,
-        totalCost: budget.totalCost,
-        status: 'pending',
+        services: sql`${JSON.stringify(budget.services || [])}::jsonb`,
+        materials: sql`${JSON.stringify(budget.materials || [])}::jsonb`,
+        laborCost: String(budget.laborCost),
+        totalCost: String(budget.totalCost),
+        status: 'pending' as const,
         createdAt: new Date()
-      }]).returning();
-      return newBudget;
+      };
+
+      const [newBudget] = await db.insert(budgets)
+        .values(budgetData)
+        .returning();
+
+      // Converta de volta para objeto ao retornar
+      return {
+        ...newBudget,
+        services: Array.isArray(newBudget.services) 
+          ? newBudget.services 
+          : typeof newBudget.services === 'string'
+            ? JSON.parse(newBudget.services)
+            : [],
+        materials: Array.isArray(newBudget.materials)
+          ? newBudget.materials
+          : typeof newBudget.materials === 'string'
+            ? JSON.parse(newBudget.materials)
+            : []
+      } as Budget;
     } catch (error) {
       console.error('Error creating budget:', error);
       throw new Error('Failed to create budget');
@@ -120,31 +149,24 @@ export class DatabaseStorage implements IStorage {
       throw new Error('Failed to update budget status');
     }
   }
+
+  async generateBudgetPDF(id: number): Promise<Buffer> {
+    try {
+      const budget = await this.getBudget(id);
+      if (!budget) {
+        throw new Error('Budget not found');
+      }
+      
+      // Aqui você implementaria a lógica de geração do PDF
+      // Por enquanto, vamos apenas retornar um buffer vazio
+      return Buffer.from('');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      throw new Error('Failed to generate PDF');
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();
 
-// Para o erro de tipagem no insert
-interface BudgetInput {
-    date: string;
-    userId: number;
-    clientName: string;
-    clientAddress: string;
-    clientCity: string;
-    clientContact: string;
-    workLocation: string;
-    serviceType: string;
-    services: any[]; // Defina uma interface mais específica se possível
-    materials: any[]; // Defina uma interface mais específica se possível
-    laborCost: number;
-    totalCost: number;
-}
-
-async function createBudget(data: BudgetInput) {
-    return await client
-        .insert(budgets)
-        .values(data)
-        .returning('*');
-}
-
-export { client }; // Exporte o client
+export { client };

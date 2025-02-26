@@ -101,8 +101,9 @@ export default function BudgetList() {
     }
   };
 
-  const formatDateTime = (date: string) => {
-    return new Date(date).toLocaleString('pt-BR', {
+  const formatDateTime = (date: Date | string) => {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    return dateObj.toLocaleString('pt-BR', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -387,7 +388,7 @@ export default function BudgetList() {
                     </div>
                   </div>
 
-                  {selectedBudget.services.length > 0 && (
+                  {selectedBudget?.services && selectedBudget.services.length > 0 && (
                     <div>
                       <h3 className="font-semibold mb-2">Serviços</h3>
                       <table className="w-full">
@@ -413,7 +414,7 @@ export default function BudgetList() {
                     </div>
                   )}
 
-                  {selectedBudget.materials.length > 0 && (
+                  {selectedBudget?.materials && selectedBudget.materials.length > 0 && (
                     <div>
                       <h3 className="font-semibold mb-2">Materiais</h3>
                       <table className="w-full">

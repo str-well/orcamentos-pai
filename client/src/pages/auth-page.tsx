@@ -48,8 +48,8 @@ const floatingIconVariants = {
 
 // Defina a interface LoginData
 interface LoginData {
-    username: string;
-    password: string;
+  username: string;
+  password: string;
 }
 
 export default function AuthPage() {
@@ -66,16 +66,6 @@ export default function AuthPage() {
   if (user) {
     return <Redirect to="/" />;
   }
-
-  // No componente, faça o type casting dos dados do formulário
-  const handleSubmit = async (data: FieldValues) => {
-    try {
-        await signIn(data as LoginData);
-        // ...
-    } catch (error) {
-        // ...
-    }
-  };
 
   return (
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-primary/20 via-background to-primary/10">
@@ -123,7 +113,9 @@ export default function AuthPage() {
                         </CardHeader>
                         <CardContent>
                           <form
-                            onSubmit={loginForm.handleSubmit((data) => loginMutation.mutate(data))}
+                            onSubmit={loginForm.handleSubmit((data) =>
+                              loginMutation.mutate(data as LoginData)
+                            )}
                             className="space-y-6"
                           >
                             <motion.div variants={itemVariants} className="space-y-2">
@@ -199,7 +191,9 @@ export default function AuthPage() {
                         </CardHeader>
                         <CardContent>
                           <form
-                            onSubmit={registerForm.handleSubmit((data) => registerMutation.mutate(data))}
+                            onSubmit={registerForm.handleSubmit((data) =>
+                              registerMutation.mutate(data as LoginData)
+                            )}
                             className="space-y-6"
                           >
                             <motion.div variants={itemVariants} className="space-y-2">

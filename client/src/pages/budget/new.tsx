@@ -31,21 +31,25 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-type BudgetFormData = Omit<InsertBudget, 'date'> & {
-  date: string;
-};
-
 interface BudgetItem {
   name: string;
   quantity: number;
   unitPrice: number;
-  total: number;
+  total?: number;
 }
 
-interface BudgetData {
+interface BudgetFormData {
   services: BudgetItem[];
   materials: BudgetItem[];
-  // ... outros campos
+  date: string;
+  clientName: string;
+  clientAddress: string;
+  clientCity: string;
+  clientContact: string;
+  workLocation: string;
+  serviceType: string;
+  laborCost: string;
+  totalCost: string;
 }
 
 function FieldLabel({ label, tooltip }: { label: string; tooltip: string }) {
@@ -122,16 +126,16 @@ export default function NewBudget() {
     },
   });
 
-  const calculateTotals = (data: BudgetData) => {
-    const servicesTotal = (data.services ?? []).reduce(
-      (sum, item) => sum + (item.quantity * item.unitPrice),
+  const calculateTotals = (data: BudgetFormData) => {
+    const servicesTotal = data.services?.reduce(
+      (sum: number, item: BudgetItem) => sum + (item.quantity * item.unitPrice),
       0
-    );
+    ) || 0;
 
-    const materialsTotal = (data.materials ?? []).reduce(
-      (sum, item) => sum + (item.quantity * item.unitPrice),
+    const materialsTotal = data.materials?.reduce(
+      (sum: number, item: BudgetItem) => sum + (item.quantity * item.unitPrice),
       0
-    );
+    ) || 0;
 
     return { servicesTotal, materialsTotal };
   };

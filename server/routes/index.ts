@@ -2,6 +2,12 @@ import { Router } from 'express';
 import { storage } from '../storage';
 import { auth } from '../auth/auth';
 import { Request, Response } from 'express';
+import { User } from '@shared/schema';
+
+// Corrija a interface para incluir todos os campos necessários
+interface RequestWithUser extends Request {
+  user?: User;
+}
 
 export async function registerRoutes(app: Router) {
   // Middleware para rotas da API
@@ -16,9 +22,12 @@ export async function registerRoutes(app: Router) {
   app.get('/api/auth/user', auth.getUser);
 
   // Rotas de orçamentos
-  app.get('/api/budgets', async (req: Request, res: Response) => {
+  app.get('/api/budgets', async (req: RequestWithUser, res: Response) => {
     try {
-      const budgets = await storage.getBudget();
+      if (!req.user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      const budgets = await storage.getBudgetsByUserId(req.user.id);
       res.json(budgets);
     } catch (error) {
       res.status(500).json({ error: 'Erro ao buscar orçamentos' });

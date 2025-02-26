@@ -3,8 +3,17 @@ import { registerRoutes } from '../server/routes';
 import express from 'express';
 import session from 'express-session';
 import { storage } from '../server/storage';
+import cors from 'cors';
 
 const app = express();
+
+// Configuração do CORS
+app.use(cors({
+  origin: process.env.VERCEL_URL 
+    ? `https://${process.env.VERCEL_URL}`
+    : 'http://localhost:3000',
+  credentials: true
+}));
 
 // Configuração do middleware de sessão
 app.use(
@@ -16,6 +25,7 @@ app.use(
     cookie: {
       secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
+      sameSite: 'none',
       maxAge: 1000 * 60 * 60 * 24 // 24 horas
     }
   })
@@ -24,11 +34,16 @@ app.use(
 app.use(express.json());
 
 // Registra as rotas da API
-registerRoutes(app);
+await registerRoutes(app);
+
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
 
 export default async function handler(req, res) {
   return new Promise((resolve, reject) => {
-    const server = createServer(app);
     app(req, res, (err) => {
       if (err) {
         return reject(err);

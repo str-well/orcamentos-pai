@@ -13,26 +13,28 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
-export async function apiRequest(
-  method: string,
-  url: string,
-  data?: unknown | undefined,
-): Promise<Response> {
-  try {
-    const res = await fetch(url, {
-      method,
-      headers: data ? { "Content-Type": "application/json" } : {},
-      body: data ? JSON.stringify(data) : undefined,
-      credentials: "include",
-    });
+export const apiRequest = async (
+  path: string,
+  options: RequestInit = {}
+): Promise<any> => {
+  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  
+  const response = await fetch(`${baseUrl}${path}`, {
+    ...options,
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
 
-    await throwIfResNotOk(res);
-    return res;
-  } catch (error) {
-    console.error('API Request error:', error);
-    throw error;
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || 'Network response was not ok');
   }
-}
+
+  return response.json();
+};
 
 type UnauthorizedBehavior = "returnNull" | "throw";
 export const getQueryFn: <T>(options: {

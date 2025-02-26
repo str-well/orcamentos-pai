@@ -129,20 +129,24 @@ export default function BudgetList() {
   }
 
   const filteredBudgets = budgets?.filter((budget) => {
+    const clientName = budget?.client_name?.toLowerCase() || '';
+    const clientCity = budget?.client_city?.toLowerCase() || '';
+    const searchLower = search.toLowerCase();
+
     const matchesSearch =
-      budget.clientName.toLowerCase().includes(search.toLowerCase()) ||
-      budget.clientCity.toLowerCase().includes(search.toLowerCase());
+      clientName.includes(searchLower) ||
+      clientCity.includes(searchLower);
 
     const matchesStatus = !statusFilter || budget.status === statusFilter;
 
-    const budgetDate = new Date(budget.createdAt);
+    const budgetDate = new Date(budget.created_at);
     const matchesDateRange = (!dateFilter.from || budgetDate >= dateFilter.from) &&
       (!dateFilter.to || budgetDate <= dateFilter.to);
 
     return matchesSearch && matchesStatus && matchesDateRange;
   }).sort((a, b) => {
-    const dateA = new Date(a.createdAt).getTime();
-    const dateB = new Date(b.createdAt).getTime();
+    const dateA = new Date(a.created_at).getTime();
+    const dateB = new Date(b.created_at).getTime();
     return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
   });
 

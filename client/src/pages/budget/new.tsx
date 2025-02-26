@@ -142,7 +142,22 @@ export default function NewBudget() {
   };
 
   const onSubmit = (data: BudgetFormData) => {
-    createBudgetMutation.mutate(data);
+    const { servicesTotal, materialsTotal } = calculateTotals(data);
+
+    const budgetData = {
+      ...data,
+      services: data.services.map(service => ({
+        ...service,
+        total: service.quantity * service.unitPrice
+      })),
+      materials: data.materials.map(material => ({
+        ...material,
+        total: material.quantity * material.unitPrice
+      })),
+      totalCost: String(servicesTotal + materialsTotal + Number(data.laborCost))
+    };
+
+    createBudgetMutation.mutate(budgetData);
   };
 
   const formatDate = (date: Date) => {

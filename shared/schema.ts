@@ -43,9 +43,9 @@ export const insertUserSchema = createInsertSchema(users).pick({
 
 export const budgetItemSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
-  quantity: z.number().min(1, "Quantidade deve ser maior que 0"),
+  quantity: z.number().min(0, "Quantidade deve ser maior ou igual a 0"),
   unitPrice: z.number().min(0, "Preço deve ser maior ou igual a 0"),
-  total: z.number()
+  total: z.number().optional()
 });
 
 type BudgetItemArray = Array<{

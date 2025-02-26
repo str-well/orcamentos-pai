@@ -11,7 +11,7 @@ import { useForm } from "react-hook-form";
 import { Redirect } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { FieldValues } from "react-hook-form";
-import { supabase } from '@/lib/supabase';
+import { useSupabaseAuth } from '@/hooks/use-supabase-auth';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -55,6 +55,7 @@ interface LoginData {
 
 export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
+  const { signIn, signUp } = useSupabaseAuth();
 
   const loginForm = useForm({
     resolver: zodResolver(insertUserSchema),
@@ -70,13 +71,8 @@ export default function AuthPage() {
 
   const handleLogin = async (data: LoginData) => {
     try {
-      const { data: authData, error } = await supabase.auth.signInWithPassword({
-        email: data.username,
-        password: data.password,
-      });
-
+      const { error } = await signIn(data.username, data.password);
       if (error) throw error;
-      return authData;
     } catch (error) {
       console.error('Erro no login:', error);
       throw error;
@@ -85,13 +81,8 @@ export default function AuthPage() {
 
   const handleRegister = async (data: LoginData) => {
     try {
-      const { data: authData, error } = await supabase.auth.signUp({
-        email: data.username,
-        password: data.password,
-      });
-
+      const { error } = await signUp(data.username, data.password);
       if (error) throw error;
-      return authData;
     } catch (error) {
       console.error('Erro no registro:', error);
       throw error;

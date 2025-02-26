@@ -17,12 +17,22 @@ async function throwIfResNotOk(res: Response) {
 }
 
 export async function apiRequest(method: string, path: string, data?: any) {
-  const response = await fetch(`${API_URL}/${path}`, {
+  // Mapeamento de endpoints
+  const endpoints = {
+    'register': 'auth/v1/signup',
+    'login': 'auth/v1/token?grant_type=password',
+    'logout': 'auth/v1/logout',
+    // Adicione outros endpoints conforme necessário
+  };
+
+  const finalPath = endpoints[path] || path;
+  
+  const response = await fetch(`${API_URL}/${finalPath}`, {
     method,
     headers: {
       'Content-Type': 'application/json',
-      'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-      'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+      'apikey': ANON_KEY,
+      'Authorization': `Bearer ${ANON_KEY}`
     },
     body: data ? JSON.stringify(data) : undefined,
     credentials: 'include',

@@ -123,3 +123,28 @@ export class DatabaseStorage implements IStorage {
 }
 
 export const storage = new DatabaseStorage();
+
+// Para o erro de tipagem no insert
+interface BudgetInput {
+    date: string;
+    userId: number;
+    clientName: string;
+    clientAddress: string;
+    clientCity: string;
+    clientContact: string;
+    workLocation: string;
+    serviceType: string;
+    services: any[]; // Defina uma interface mais específica se possível
+    materials: any[]; // Defina uma interface mais específica se possível
+    laborCost: number;
+    totalCost: number;
+}
+
+async function createBudget(data: BudgetInput) {
+    return await client
+        .insert(budgets)
+        .values(data)
+        .returning('*');
+}
+
+export { client }; // Exporte o client

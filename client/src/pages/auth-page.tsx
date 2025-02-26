@@ -10,6 +10,7 @@ import { Loader2, User, Lock, Building2, Wrench } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { Redirect } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
+import { FieldValues } from "react-hook-form";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -45,6 +46,12 @@ const floatingIconVariants = {
   }
 };
 
+// Defina a interface LoginData
+interface LoginData {
+    username: string;
+    password: string;
+}
+
 export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
 
@@ -59,6 +66,16 @@ export default function AuthPage() {
   if (user) {
     return <Redirect to="/" />;
   }
+
+  // No componente, faça o type casting dos dados do formulário
+  const handleSubmit = async (data: FieldValues) => {
+    try {
+        await signIn(data as LoginData);
+        // ...
+    } catch (error) {
+        // ...
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-primary/20 via-background to-primary/10">

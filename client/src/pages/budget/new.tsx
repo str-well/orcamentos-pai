@@ -35,6 +35,19 @@ type BudgetFormData = Omit<InsertBudget, 'date'> & {
   date: string;
 };
 
+interface BudgetItem {
+  name: string;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+}
+
+interface BudgetData {
+  services: BudgetItem[];
+  materials: BudgetItem[];
+  // ... outros campos
+}
+
 function FieldLabel({ label, tooltip }: { label: string; tooltip: string }) {
   return (
     <div className="flex items-center gap-2">
@@ -109,30 +122,18 @@ export default function NewBudget() {
     },
   });
 
-  const calculateTotals = (data: BudgetFormData): BudgetFormData => {
-    const servicesTotal = data.services.reduce(
-      (sum, item) => sum + (item.quantity * item.unitPrice || 0),
+  const calculateTotals = (data: BudgetData) => {
+    const servicesTotal = (data.services ?? []).reduce(
+      (sum, item) => sum + (item.quantity * item.unitPrice),
       0
     );
-    const materialsTotal = data.materials.reduce(
-      (sum, item) => sum + (item.quantity * item.unitPrice || 0),
-      0
-    );
-    const laborCost = parseFloat(data.laborCost) || 0;
 
-    return {
-      ...data,
-      services: data.services.map((s) => ({
-        ...s,
-        total: (s.quantity * s.unitPrice) || 0,
-      })),
-      materials: data.materials.map((m) => ({
-        ...m,
-        total: (m.quantity * m.unitPrice) || 0,
-      })),
-      laborCost: laborCost.toString(),
-      totalCost: (servicesTotal + materialsTotal + laborCost).toString(),
-    };
+    const materialsTotal = (data.materials ?? []).reduce(
+      (sum, item) => sum + (item.quantity * item.unitPrice),
+      0
+    );
+
+    return { servicesTotal, materialsTotal };
   };
 
   const onSubmit = async (data: BudgetFormData) => {
@@ -143,14 +144,14 @@ export default function NewBudget() {
       console.log("Data with totals:", withTotals);
 
       const formattedData = {
-        ...withTotals,
+        ...data,
         date: new Date(data.date).toISOString(),
-        services: withTotals.services.map(s => ({
+        services: data.services.map((s) => ({
           ...s,
           quantity: Number(s.quantity),
           unitPrice: Number(s.unitPrice)
         })),
-        materials: withTotals.materials.map(m => ({
+        materials: data.materials.map((m) => ({
           ...m,
           quantity: Number(m.quantity),
           unitPrice: Number(m.unitPrice)

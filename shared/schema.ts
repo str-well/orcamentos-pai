@@ -52,6 +52,11 @@ export const insertBudgetSchema = createInsertSchema(budgets).omit({
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
+export interface User {
+  id: number;
+  username: string;
+  password: string;
+  // ... outros campos
+}
 export type Budget = typeof budgets.$inferSelect;
 export type InsertBudget = z.infer<typeof insertBudgetSchema>;

@@ -1,20 +1,21 @@
-import { users, budgets, type User, type InsertUser, type Budget, type InsertBudget } from "@shared/schema";
-import { db } from "./db";
+import pkg from 'pg';
+const { Pool } = pkg;
+import { users, budgets, type User, type InsertUser, type Budget, type InsertBudget } from "../shared/schema.js";
+import { db } from "./db.js";
 import { eq } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
-import { Pool } from 'pg';
-import { client } from "./db";
 import { sql } from 'drizzle-orm';
 
 const PostgresSessionStore = connectPg(session);
 
 // Crie um pool do PostgreSQL
 const pool = new Pool({
-  connectionString: process.env.POSTGRES_URL,
+  connectionString: process.env.POSTGRES_URL ?? process.env.DATABASE_URL,
   ssl: {
     rejectUnauthorized: false
-  }
+  },
+  max: 1 // Limite de conexões para evitar problemas com o plano gratuito
 });
 
 export interface IStorage {
@@ -168,5 +169,3 @@ export class DatabaseStorage implements IStorage {
 }
 
 export const storage = new DatabaseStorage();
-
-export { client };

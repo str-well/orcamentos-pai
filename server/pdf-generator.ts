@@ -1,5 +1,5 @@
 import PDFDocument from "pdfkit";
-import { type Budget } from "@shared/schema";
+import { type Budget } from "../shared/schema.js";
 
 interface TableRow {
   name: string;

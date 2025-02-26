@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { User } from '@shared/schema';
+import { User } from '../../shared/schema.js';
 
 export const auth = {
   login: async (req: Request, res: Response) => {

@@ -4,6 +4,7 @@ import themePlugin from "@replit/vite-plugin-shadcn-theme-json";
 import path, { dirname } from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 import { fileURLToPath } from "url";
+import { cartographer } from "@replit/vite-plugin-cartographer";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -13,38 +14,49 @@ export default defineConfig({
     react(),
     runtimeErrorOverlay(),
     themePlugin(),
-    ...(process.env.NODE_ENV !== "production" &&
-    process.env.REPL_ID !== undefined
-      ? [
-          await import("@replit/vite-plugin-cartographer").then((m) =>
-            m.cartographer(),
-          ),
-        ]
+    ...(process.env.NODE_ENV !== "production" && process.env.REPL_ID !== undefined
+      ? [cartographer()]
       : []),
   ],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "client/src"),
       "@shared": path.resolve(__dirname, "shared"),
-    },
+    }
   },
   root: path.resolve(__dirname, "client"),
   build: {
     outDir: path.resolve(__dirname, "dist"),
     emptyOutDir: true,
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, "client/index.html")
+      }
+    }
+  },
+  optimizeDeps: {
+    esbuildOptions: {
+      target: 'es2020',
+      supported: { 
+        'top-level-await': true 
+      },
+      jsx: 'automatic',
+      jsxImportSource: 'react'
+    }
   },
   server: {
     proxy: {
       '/api': {
         target: 'http://localhost:3000',
         changeOrigin: true,
+        secure: false
       }
     }
   },
   define: {
     'process.env.VITE_API_URL': JSON.stringify(process.env.VERCEL_URL 
-      ? `https://${process.env.VERCEL_URL}/api`
-      : 'http://localhost:3000/api'
+      ? `https://${process.env.VERCEL_URL}`
+      : 'http://localhost:3000'
     )
   }
 });

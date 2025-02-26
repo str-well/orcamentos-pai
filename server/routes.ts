@@ -1,10 +1,10 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { setupAuth } from "./auth";
-import { storage } from "./storage";
-import { insertBudgetSchema } from "@shared/schema";
+import { setupAuth } from "./auth.js";
+import { storage } from "./storage.js";
+import { insertBudgetSchema } from "../shared/schema.js";
 import { z } from "zod";
-import { generateBudgetPDF } from "./pdf-generator";
+import { generateBudgetPDF } from "./pdf-generator.js";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);

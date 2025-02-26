@@ -1,15 +1,15 @@
-import { Router } from 'express';
-import { storage } from '../storage';
-import { auth } from '../auth/auth';
+import express from 'express';
+import { storage } from '../storage.js';
+import { auth } from '../auth/auth.js';
 import { Request, Response } from 'express';
-import { User } from '@shared/schema';
+import { type User } from '../../shared/schema.js';
 
 // Corrija a interface para incluir todos os campos necessários
 interface RequestWithUser extends Request {
   user?: User;
 }
 
-export async function registerRoutes(app: Router) {
+export async function registerRoutes(app: express.Router) {
   // Middleware para rotas da API
   app.use('/api/*', (req, res, next) => {
     res.type('application/json');

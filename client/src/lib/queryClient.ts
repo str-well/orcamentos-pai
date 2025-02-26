@@ -1,8 +1,6 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
-const API_URL = process.env.NODE_ENV === 'production'
-  ? `https://${window.location.host}`
-  : 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -17,22 +15,18 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
-export async function apiRequest(method: string, path: string, body?: any) {
-  const apiPath = path.startsWith('/api/') ? path : `/api/${path}`;
-  
-  const response = await fetch(`${API_URL}${apiPath}`, {
+export async function apiRequest(method: string, path: string, data?: any) {
+  const response = await fetch(`${API_URL}/api/${path}`, {
     method,
     headers: {
       'Content-Type': 'application/json',
     },
-    body: body ? JSON.stringify(body) : undefined,
+    body: data ? JSON.stringify(data) : undefined,
     credentials: 'include'
   });
 
   if (!response.ok) {
-    const errorText = await response.text();
-    console.error('API Error:', errorText);
-    throw new Error(`${response.status}: ${errorText}`);
+    throw response;
   }
 
   return response;

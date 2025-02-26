@@ -26,6 +26,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Label } from "@/components/ui/label";
 import { useBudgets } from "@/hooks/use-budgets";
+import { supabase } from "@/lib/supabase";
 
 export default function BudgetList() {
   const { toast } = useToast();
@@ -51,16 +52,20 @@ export default function BudgetList() {
       id: number;
       status: "approved" | "rejected";
     }) => {
-      const res = await fetch(`/api/budgets/${id}/status`, {
-        method: 'PUT',
+      const { data: { session } } = await supabase.auth.getSession();
+
+      const res = await fetch(`https://dbxabmijgyxuazvdelpx.supabase.co/functions/v1/update-budget-status/${id}`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
         },
         body: JSON.stringify({ status }),
       });
 
       if (!res.ok) {
-        throw new Error('Failed to update budget status');
+        const error = await res.json();
+        throw new Error(error.message || 'Falha ao atualizar status');
       }
 
       return res.json();
@@ -68,13 +73,13 @@ export default function BudgetList() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/budgets"] });
       toast({
-        title: "Success",
-        description: "Budget status updated successfully",
+        title: "Sucesso",
+        description: "Status do orçamento atualizado com sucesso",
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Error",
+        title: "Erro",
         description: error.message,
         variant: "destructive",
       });
@@ -83,23 +88,23 @@ export default function BudgetList() {
 
   const generatePDF = async (budget: Budget) => {
     try {
-      const response = await fetch(`/api/budgets/${budget.id}/pdf`, {
-        credentials: 'include'
+      const { data: { session } } = await supabase.auth.getSession();
+
+      const response = await fetch(`https://dbxabmijgyxuazvdelpx.supabase.co/functions/v1/generate-budget-pdf/${budget.id}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${session?.access_token}`
+        }
       });
 
       if (!response.ok) {
-        throw new Error('Failed to generate PDF');
+        throw new Error('Falha ao gerar PDF');
       }
 
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `orcamento-${budget.id}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      const { url } = await response.json();
+
+      // Abrir o PDF em uma nova aba
+      window.open(url, '_blank');
     } catch (error) {
       toast({
         title: "Erro",

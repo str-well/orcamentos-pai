@@ -6,8 +6,11 @@
       "use": "@vercel/node"
     },
     {
-      "src": "client/index.html",
-      "use": "@vercel/static"
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
     }
   ],
   "rewrites": [
@@ -17,7 +20,7 @@
     },
     {
       "source": "/(.*)",
-      "destination": "/client/index.html"
+      "destination": "/dist/$1"
     }
   ],
   "headers": [

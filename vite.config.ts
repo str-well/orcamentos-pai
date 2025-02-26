@@ -59,7 +59,7 @@ export default defineConfig({
   },
   define: {
     'process.env.VITE_API_URL': JSON.stringify(process.env.VERCEL_URL 
-      ? `https://${process.env.VERCEL_URL}`
+      ? `https://orcamentos-pai.vercel.app`
       : 'http://localhost:3000'
     )
   }

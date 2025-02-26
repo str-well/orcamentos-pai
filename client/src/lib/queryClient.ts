@@ -1,6 +1,8 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_URL = import.meta.env.PROD 
+  ? 'https://orcamentos-pai.vercel.app'
+  : 'http://localhost:3000';
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -22,7 +24,8 @@ export async function apiRequest(method: string, path: string, data?: any) {
       'Content-Type': 'application/json',
     },
     body: data ? JSON.stringify(data) : undefined,
-    credentials: 'include'
+    credentials: 'include',
+    mode: 'cors'
   });
 
   if (!response.ok) {

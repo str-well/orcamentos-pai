@@ -101,10 +101,15 @@ export default function BudgetList() {
         throw new Error('Falha ao gerar PDF');
       }
 
-      const { url } = await response.json();
+      const data = await response.json();
 
-      // Abrir o PDF em uma nova aba
-      window.open(url, '_blank');
+      // Verificar se a URL do PDF está disponível
+      if (data.pdfUrl) {
+        // Abrir o PDF em uma nova aba
+        window.open(data.pdfUrl, '_blank');
+      } else {
+        throw new Error('URL do PDF não disponível');
+      }
     } catch (error) {
       toast({
         title: "Erro",

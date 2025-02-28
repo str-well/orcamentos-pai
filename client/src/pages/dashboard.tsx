@@ -26,7 +26,7 @@ export default function Dashboard() {
   const { logoutMutation } = useAuth();
 
   const { data: budgets, isLoading } = useQuery<Budget[]>({
-    queryKey: ["/api/budgets"],
+    queryKey: ["budgets"],
   });
 
   if (isLoading) {

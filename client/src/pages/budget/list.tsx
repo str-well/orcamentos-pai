@@ -71,7 +71,7 @@ export default function BudgetList() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/budgets"] });
+      queryClient.invalidateQueries({ queryKey: ["budgets"] });
       toast({
         title: "Sucesso",
         description: "Status do orçamento atualizado com sucesso",
@@ -139,8 +139,8 @@ export default function BudgetList() {
   }
 
   const filteredBudgets = budgets?.filter((budget) => {
-    const clientName = budget?.client_name?.toLowerCase() || '';
-    const clientCity = budget?.client_city?.toLowerCase() || '';
+    const clientName = budget?.clientName?.toLowerCase() || '';
+    const clientCity = budget?.clientCity?.toLowerCase() || '';
     const searchLower = search.toLowerCase();
 
     const matchesSearch =
@@ -149,14 +149,14 @@ export default function BudgetList() {
 
     const matchesStatus = !statusFilter || budget.status === statusFilter;
 
-    const budgetDate = new Date(budget.created_at);
+    const budgetDate = new Date(budget.createdAt);
     const matchesDateRange = (!dateFilter.from || budgetDate >= dateFilter.from) &&
       (!dateFilter.to || budgetDate <= dateFilter.to);
 
     return matchesSearch && matchesStatus && matchesDateRange;
   }).sort((a, b) => {
-    const dateA = new Date(a.created_at).getTime();
-    const dateB = new Date(b.created_at).getTime();
+    const dateA = new Date(a.createdAt).getTime();
+    const dateB = new Date(b.createdAt).getTime();
     return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
   });
 
@@ -300,7 +300,7 @@ export default function BudgetList() {
                           <td className="py-2">#{budget.id}</td>
                           <td className="py-2">{budget.clientName}</td>
                           <td className="py-2">
-                            {budget.created_at ? new Date(budget.created_at).toLocaleString('pt-BR') : 'Data não disponível'}
+                            {budget.createdAt ? new Date(budget.createdAt).toLocaleString('pt-BR') : 'Data não disponível'}
                           </td>
                           <td className="py-2">{budget.clientCity}</td>
                           <td className="py-2">R$ {budget.totalCost}</td>
@@ -383,7 +383,7 @@ export default function BudgetList() {
                     <div>
                       <h2 className="text-2xl font-bold">Orçamento #{selectedBudget.id}</h2>
                       <p className="text-sm text-gray-500">
-                        Criado em {selectedBudget.created_at ? new Date(selectedBudget.created_at).toLocaleString('pt-BR') : 'Data não disponível'}
+                        Criado em {selectedBudget.createdAt ? new Date(selectedBudget.createdAt).toLocaleString('pt-BR') : 'Data não disponível'}
                       </p>
                     </div>
                     <div className="text-right">

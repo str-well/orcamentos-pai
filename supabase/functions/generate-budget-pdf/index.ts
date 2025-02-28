@@ -45,6 +45,12 @@ interface Budget {
   status: string;
 }
 
+const COLORS = {
+  primary: '#2563eb', // Azul
+  secondary: '#f3f4f6', // Cinza claro
+  text: '#1f2937', // Cinza escuro
+};
+
 Deno.serve(async (req) => {
   // Lidar com requisições OPTIONS (preflight)
   if (req.method === 'OPTIONS') {
@@ -189,52 +195,146 @@ async function generatePDF(budget: Budget): Promise<Uint8Array> {
   // Configurar fonte para suportar caracteres especiais
   doc.setFont("helvetica");
   
-  // Título
-  doc.setFontSize(18);
-  doc.text(`ORÇAMENTO #${budget.id}`, 20, 20);
-  
+  /* ------------------------------------------------------------------
+   * Cabeçalho com título
+   * ------------------------------------------------------------------ */
+  doc.setFillColor(COLORS.primary);
+  doc.rect(0, 0, doc.internal.pageSize.width, 40, 'F');
+
+  doc.setFontSize(24);
+  doc.setTextColor(255, 255, 255);
+  doc.text('Orçamento', doc.internal.pageSize.width / 2, 25, { align: 'center' });
+
+  /* ------------------------------------------------------------------
+   * Dados da Empresa
+   * ------------------------------------------------------------------ */
+  doc.setFillColor(COLORS.secondary);
+  doc.rect(20, 50, doc.internal.pageSize.width - 40, 40, 'F');
+
+  doc.setFontSize(11);
+  doc.setTextColor(COLORS.text);
+  doc.text('JH Serviços', 25, 60);
+  doc.setFontSize(9);
+  doc.text('CNPJ: 26.850.931/0001-72', 25, 70);
+  doc.text('Rua Doutor Fritz Martin, 225 - Vila Cruzeiro, São Paulo', 25, 80);
+  doc.text('(11) 95224-9455 | Email: jh-servicos@hotmail.com', 25, 90);
+
+  /* ------------------------------------------------------------------
+   * Box de Informações
+   * ------------------------------------------------------------------ */
+  doc.setFillColor(COLORS.secondary);
+  doc.rect(20, 100, doc.internal.pageSize.width - 40, 80, 'F');
+
   // Informações do Cliente
   doc.setFontSize(12);
-  doc.text(`Cliente: ${budget.client_name}`, 20, 40);
-  doc.text(`Endereço: ${budget.client_address}, ${budget.client_city}`, 20, 50);
-  doc.text(`Contato: ${budget.client_contact}`, 20, 60);
-  
-  // Informações do Serviço
-  doc.text(`Local do Serviço: ${budget.work_location}`, 20, 80);
-  doc.text(`Tipo de Serviço: ${budget.service_type}`, 20, 90);
-  doc.text(`Data: ${budget.date}`, 20, 100);
-  
-  // Serviços
-  let yPos = 120;
-  doc.setFontSize(14);
-  doc.text("SERVIÇOS:", 20, yPos);
+  doc.setFont("helvetica", "bold");
+  doc.text('Informações do cliente', 25, 110);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.text(`Nome: ${budget.client_name}`, 25, 120);
+  doc.text(`Endereço: ${budget.client_address}`, 25, 130);
+  doc.text(`Cidade: ${budget.client_city}`, 25, 140);
+  doc.text(`Contato: ${budget.client_contact}`, 25, 150);
+
+  // Linha divisória
+  doc.setDrawColor(COLORS.primary);
+  doc.line(25, 160, doc.internal.pageSize.width - 25, 160);
+
+  // Detalhes do Serviço
   doc.setFontSize(12);
+  doc.setFont("helvetica", "bold");
+  doc.text('Detalhes do serviço', 25, 170);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.text(`Local: ${budget.work_location}`, 25, 180);
+  doc.text(`Tipo de Serviço: ${budget.service_type}`, 25, 190);
+  doc.text(`Data: ${new Date(budget.date).toLocaleDateString('pt-BR')}`, 25, 200);
+
+  /* ------------------------------------------------------------------
+   * Tabelas de Serviços e Materiais
+   * ------------------------------------------------------------------ */
+  let yPos = 220;
+
+  // Tabela de Serviços
+  doc.setFontSize(12);
+  doc.setFont("helvetica", "bold");
+  doc.text('Serviços', 25, yPos);
   yPos += 10;
-  
-  budget.services.forEach(service => {
-    doc.text(`- ${service.name}: ${service.quantity} x R$ ${service.unitPrice} = R$ ${service.total}`, 20, yPos);
+
+  // Cabeçalho da tabela
+  doc.setFillColor(COLORS.primary);
+  doc.rect(20, yPos, doc.internal.pageSize.width - 40, 10, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(9);
+  doc.text('Item', 25, yPos + 7);
+  doc.text('Qtd', 100, yPos + 7);
+  doc.text('Preço Un.', 130, yPos + 7);
+  doc.text('Total', 170, yPos + 7);
+  yPos += 15;
+
+  // Linhas da tabela de serviços
+  doc.setTextColor(COLORS.text);
+  budget.services.forEach((service, index) => {
+    if (index % 2 === 0) {
+      doc.setFillColor(COLORS.secondary);
+      doc.rect(20, yPos - 5, doc.internal.pageSize.width - 40, 10, 'F');
+    }
+    doc.text(service.name, 25, yPos);
+    doc.text(service.quantity.toString(), 100, yPos);
+    doc.text(`R$ ${service.unitPrice.toFixed(2)}`, 130, yPos);
+    doc.text(`R$ ${service.total.toFixed(2)}`, 170, yPos);
     yPos += 10;
   });
-  
-  // Materiais
+
   yPos += 10;
-  doc.setFontSize(14);
-  doc.text("MATERIAIS:", 20, yPos);
+
+  // Tabela de Materiais
   doc.setFontSize(12);
+  doc.setFont("helvetica", "bold");
+  doc.text('Materiais', 25, yPos);
   yPos += 10;
-  
-  budget.materials.forEach(material => {
-    doc.text(`- ${material.name}: ${material.quantity} x R$ ${material.unitPrice} = R$ ${material.total}`, 20, yPos);
+
+  // Cabeçalho da tabela
+  doc.setFillColor(COLORS.primary);
+  doc.rect(20, yPos, doc.internal.pageSize.width - 40, 10, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(9);
+  doc.text('Item', 25, yPos + 7);
+  doc.text('Qtd', 100, yPos + 7);
+  doc.text('Preço Un.', 130, yPos + 7);
+  doc.text('Total', 170, yPos + 7);
+  yPos += 15;
+
+  // Linhas da tabela de materiais
+  doc.setTextColor(COLORS.text);
+  budget.materials.forEach((material, index) => {
+    if (index % 2 === 0) {
+      doc.setFillColor(COLORS.secondary);
+      doc.rect(20, yPos - 5, doc.internal.pageSize.width - 40, 10, 'F');
+    }
+    doc.text(material.name, 25, yPos);
+    doc.text(material.quantity.toString(), 100, yPos);
+    doc.text(`R$ ${material.unitPrice.toFixed(2)}`, 130, yPos);
+    doc.text(`R$ ${material.total.toFixed(2)}`, 170, yPos);
     yPos += 10;
   });
-  
-  // Totais
-  yPos += 10;
-  doc.text(`Custo de Mão de Obra: R$ ${budget.labor_cost}`, 20, yPos);
+
   yPos += 20;
-  doc.setFontSize(14);
-  doc.text(`TOTAL: R$ ${budget.total_cost}`, 20, yPos);
-  
+
+  /* ------------------------------------------------------------------
+   * Totais
+   * ------------------------------------------------------------------ */
+  doc.setFillColor(COLORS.secondary);
+  doc.rect(doc.internal.pageSize.width - 90, yPos - 5, 70, 30, 'F');
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.setTextColor(COLORS.text);
+  doc.text(`Mão de Obra: R$ ${budget.labor_cost.toFixed(2)}`, doc.internal.pageSize.width - 85, yPos + 5);
+  doc.text(`Total: R$ ${budget.total_cost.toFixed(2)}`, doc.internal.pageSize.width - 85, yPos + 20);
+
   // Converter o PDF para Uint8Array
   const pdfBytes = doc.output('arraybuffer');
   return new Uint8Array(pdfBytes);

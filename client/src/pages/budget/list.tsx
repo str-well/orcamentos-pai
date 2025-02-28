@@ -375,100 +375,114 @@ export default function BudgetList() {
         <AnimatePresence>
           {selectedBudget && (
             <Dialog open={!!selectedBudget} onOpenChange={() => setSelectedBudget(null)}>
-              <DialogContent className="max-w-3xl">
+              <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.3 }}
-                  className="space-y-6"
+                  className="space-y-4 sm:space-y-6"
                 >
-                  <div className="flex justify-between items-start">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                     <div>
-                      <h2 className="text-2xl font-bold">Orçamento #{selectedBudget.id}</h2>
-                      <p className="text-sm text-gray-500">
+                      <h2 className="text-xl sm:text-2xl font-bold">Orçamento #{selectedBudget.id}</h2>
+                      <p className="text-xs sm:text-sm text-gray-500">
                         Criado em {selectedBudget.created_at ? new Date(selectedBudget.created_at).toLocaleString('pt-BR') : 'Data não disponível'}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold">Status: {
+                      <p className="font-semibold text-sm sm:text-base">Status: {
                         selectedBudget.status === 'pending' ? 'Pendente' :
                           selectedBudget.status === 'approved' ? 'Aprovado' : 'Rejeitado'
                       }</p>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <h3 className="font-semibold mb-2">Dados do Cliente</h3>
-                      <p>Nome: {selectedBudget.client_name}</p>
-                      <p>Endereço: {selectedBudget.client_address}</p>
-                      <p>Cidade: {selectedBudget.client_city}</p>
-                      <p>Contato: {selectedBudget.client_contact}</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <h3 className="font-semibold mb-2 text-sm sm:text-base">Dados do Cliente</h3>
+                      <div className="space-y-1 text-sm">
+                        <p><span className="font-medium">Nome:</span> {selectedBudget.client_name}</p>
+                        <p><span className="font-medium">Endereço:</span> {selectedBudget.client_address}</p>
+                        <p><span className="font-medium">Cidade:</span> {selectedBudget.client_city}</p>
+                        <p><span className="font-medium">Contato:</span> {selectedBudget.client_contact}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-semibold mb-2">Dados do Serviço</h3>
-                      <p>Local: {selectedBudget.work_location}</p>
-                      <p>Tipo: {selectedBudget.service_type}</p>
-                      <p>Data: {new Date(selectedBudget.date).toLocaleDateString('pt-BR')}</p>
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <h3 className="font-semibold mb-2 text-sm sm:text-base">Dados do Serviço</h3>
+                      <div className="space-y-1 text-sm">
+                        <p><span className="font-medium">Local:</span> {selectedBudget.work_location}</p>
+                        <p><span className="font-medium">Tipo:</span> {selectedBudget.service_type}</p>
+                        <p><span className="font-medium">Data:</span> {new Date(selectedBudget.date).toLocaleDateString('pt-BR')}</p>
+                      </div>
                     </div>
                   </div>
 
                   {selectedBudget?.services && selectedBudget.services.length > 0 && (
-                    <div>
-                      <h3 className="font-semibold mb-2">Serviços</h3>
-                      <table className="w-full">
-                        <thead>
-                          <tr className="border-b">
-                            <th className="text-left py-2">Serviço</th>
-                            <th className="text-right py-2">Qtd</th>
-                            <th className="text-right py-2">Preço Un.</th>
-                            <th className="text-right py-2">Total</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {selectedBudget.services.map((service, index) => (
-                            <tr key={index} className="border-b">
-                              <td className="py-2">{service.name}</td>
-                              <td className="text-right py-2">{service.quantity}</td>
-                              <td className="text-right py-2">R$ {service.unitPrice}</td>
-                              <td className="text-right py-2">R$ {service.total}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                    <div className="overflow-x-auto">
+                      <h3 className="font-semibold mb-2 text-sm sm:text-base">Serviços</h3>
+                      <div className="min-w-full inline-block align-middle">
+                        <div className="overflow-hidden">
+                          <table className="min-w-full divide-y divide-gray-200">
+                            <thead>
+                              <tr className="bg-gray-50">
+                                <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500">Serviço</th>
+                                <th scope="col" className="px-3 py-2 text-right text-xs font-medium text-gray-500">Qtd</th>
+                                <th scope="col" className="px-3 py-2 text-right text-xs font-medium text-gray-500">Preço Un.</th>
+                                <th scope="col" className="px-3 py-2 text-right text-xs font-medium text-gray-500">Total</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-200">
+                              {selectedBudget.services.map((service, index) => (
+                                <tr key={index}>
+                                  <td className="px-3 py-2 text-sm">{service.name}</td>
+                                  <td className="px-3 py-2 text-sm text-right">{service.quantity}</td>
+                                  <td className="px-3 py-2 text-sm text-right">R$ {service.unitPrice.toFixed(2)}</td>
+                                  <td className="px-3 py-2 text-sm text-right">R$ {service.total.toFixed(2)}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
                     </div>
                   )}
 
                   {selectedBudget?.materials && selectedBudget.materials.length > 0 && (
-                    <div>
-                      <h3 className="font-semibold mb-2">Materiais</h3>
-                      <table className="w-full">
-                        <thead>
-                          <tr className="border-b">
-                            <th className="text-left py-2">Material</th>
-                            <th className="text-right py-2">Qtd</th>
-                            <th className="text-right py-2">Preço Un.</th>
-                            <th className="text-right py-2">Total</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {selectedBudget.materials.map((material, index) => (
-                            <tr key={index} className="border-b">
-                              <td className="py-2">{material.name}</td>
-                              <td className="text-right py-2">{material.quantity}</td>
-                              <td className="text-right py-2">R$ {material.unitPrice}</td>
-                              <td className="text-right py-2">R$ {material.total}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                    <div className="overflow-x-auto">
+                      <h3 className="font-semibold mb-2 text-sm sm:text-base">Materiais</h3>
+                      <div className="min-w-full inline-block align-middle">
+                        <div className="overflow-hidden">
+                          <table className="min-w-full divide-y divide-gray-200">
+                            <thead>
+                              <tr className="bg-gray-50">
+                                <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500">Material</th>
+                                <th scope="col" className="px-3 py-2 text-right text-xs font-medium text-gray-500">Qtd</th>
+                                <th scope="col" className="px-3 py-2 text-right text-xs font-medium text-gray-500">Preço Un.</th>
+                                <th scope="col" className="px-3 py-2 text-right text-xs font-medium text-gray-500">Total</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-200">
+                              {selectedBudget.materials.map((material, index) => (
+                                <tr key={index}>
+                                  <td className="px-3 py-2 text-sm">{material.name}</td>
+                                  <td className="px-3 py-2 text-sm text-right">{material.quantity}</td>
+                                  <td className="px-3 py-2 text-sm text-right">R$ {material.unitPrice.toFixed(2)}</td>
+                                  <td className="px-3 py-2 text-sm text-right">R$ {material.total.toFixed(2)}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
                     </div>
                   )}
 
-                  <div className="text-right space-y-1">
-                    <p>Mão de Obra: R$ {selectedBudget.labor_cost}</p>
-                    <p className="text-lg font-bold">Total: R$ {selectedBudget.total_cost}</p>
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <div className="text-right space-y-1">
+                      <p className="text-sm"><span className="font-medium">Mão de Obra:</span> R$ {selectedBudget.labor_cost}</p>
+                      <p className="text-base sm:text-lg font-bold">Total: R$ {selectedBudget.total_cost}</p>
+                    </div>
                   </div>
                 </motion.div>
               </DialogContent>

@@ -173,260 +173,288 @@ export default function NewBudget() {
             <CardTitle>Novo Orçamento</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Nome do Cliente</Label>
-                  <Input {...form.register("clientName")} />
-                  {form.formState.errors.clientName && (
-                    <p className="text-sm text-red-500">
-                      {form.formState.errors.clientName.message}
-                    </p>
-                  )}
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="clientName">Nome do Cliente</Label>
+                    <Input
+                      id="clientName"
+                      {...form.register("clientName")}
+                      className="mt-1"
+                    />
+                    {form.formState.errors.clientName && (
+                      <p className="text-sm text-red-500 mt-1">{form.formState.errors.clientName.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="clientAddress">Endereço</Label>
+                    <Input
+                      id="clientAddress"
+                      {...form.register("clientAddress")}
+                      className="mt-1"
+                    />
+                    {form.formState.errors.clientAddress && (
+                      <p className="text-sm text-red-500 mt-1">{form.formState.errors.clientAddress.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="clientCity">Cidade</Label>
+                    <Input
+                      id="clientCity"
+                      {...form.register("clientCity")}
+                      className="mt-1"
+                    />
+                    {form.formState.errors.clientCity && (
+                      <p className="text-sm text-red-500 mt-1">{form.formState.errors.clientCity.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="clientContact">Contato</Label>
+                    <Input
+                      id="clientContact"
+                      {...form.register("clientContact")}
+                      className="mt-1"
+                    />
+                    {form.formState.errors.clientContact && (
+                      <p className="text-sm text-red-500 mt-1">{form.formState.errors.clientContact.message}</p>
+                    )}
+                  </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Contato</Label>
-                  <Input {...form.register("clientContact")} />
-                  {form.formState.errors.clientContact && (
-                    <p className="text-sm text-red-500">
-                      {form.formState.errors.clientContact.message}
-                    </p>
-                  )}
-                </div>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="workLocation">Local da Obra</Label>
+                    <Input
+                      id="workLocation"
+                      {...form.register("workLocation")}
+                      className="mt-1"
+                    />
+                    {form.formState.errors.workLocation && (
+                      <p className="text-sm text-red-500 mt-1">{form.formState.errors.workLocation.message}</p>
+                    )}
+                  </div>
 
-                <div className="space-y-2">
-                  <Label>Endereço</Label>
-                  <Input {...form.register("clientAddress")} />
-                  {form.formState.errors.clientAddress && (
-                    <p className="text-sm text-red-500">
-                      {form.formState.errors.clientAddress.message}
-                    </p>
-                  )}
-                </div>
+                  <div>
+                    <Label htmlFor="serviceType">Tipo de Serviço</Label>
+                    <Input
+                      id="serviceType"
+                      {...form.register("serviceType")}
+                      className="mt-1"
+                    />
+                    {form.formState.errors.serviceType && (
+                      <p className="text-sm text-red-500 mt-1">{form.formState.errors.serviceType.message}</p>
+                    )}
+                  </div>
 
-                <div className="space-y-2">
-                  <Label>Cidade</Label>
-                  <Input {...form.register("clientCity")} />
-                  {form.formState.errors.clientCity && (
-                    <p className="text-sm text-red-500">
-                      {form.formState.errors.clientCity.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Local do Trabalho</Label>
-                  <Input {...form.register("workLocation")} />
-                  {form.formState.errors.workLocation && (
-                    <p className="text-sm text-red-500">
-                      {form.formState.errors.workLocation.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Tipo de Serviço</Label>
-                  <Select
-                    onValueChange={(value) =>
-                      form.setValue("serviceType", value)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o tipo de serviço" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="electrical">Elétrica</SelectItem>
-                      <SelectItem value="plumbing">Hidráulica</SelectItem>
-                      <SelectItem value="construction">Construção</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {form.formState.errors.serviceType && (
-                    <p className="text-sm text-red-500">
-                      {form.formState.errors.serviceType.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Data</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !form.watch("date") && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {form.watch("date") ? (
-                          formatDate(new Date(form.watch("date")))
-                        ) : (
-                          <span>Selecione uma data</span>
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={form.watch("date") ? new Date(form.watch("date")) : undefined}
-                        onSelect={(date) => {
-                          if (date) {
-                            form.setValue("date", date.toISOString());
-                          }
-                        }}
-                        initialFocus
-                        locale={ptBR}
-                      />
-                    </PopoverContent>
-                  </Popover>
+                  <div>
+                    <Label htmlFor="date">Data</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal mt-1",
+                            !form.watch("date") && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {form.watch("date") ? format(new Date(form.watch("date")), "PPP", { locale: ptBR }) : <span>Selecione uma data</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={form.watch("date") ? new Date(form.watch("date")) : undefined}
+                          onSelect={(date) => {
+                            if (date) {
+                              form.setValue("date", date.toISOString());
+                            }
+                          }}
+                          initialFocus
+                          locale={ptBR}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <Label>Serviços</Label>
-                <div className="space-y-4">
-                  {services.fields.map((field, index) => (
-                    <div key={field.id} className="space-y-2">
-                      <div className="grid grid-cols-3 gap-4">
-                        <div>
-                          <FieldLabel
-                            label="Nome do Serviço"
-                            tooltip="Descreva o serviço a ser realizado"
-                          />
+              <div className="space-y-4">
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <Label>Serviços</Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => services.append({ name: "", quantity: 0, unitPrice: 0, total: 0 })}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Adicionar Serviço
+                    </Button>
+                  </div>
+                  <div className="space-y-4">
+                    {services.fields.map((field, index) => (
+                      <div key={field.id} className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-start bg-gray-50 p-4 rounded-lg">
+                        <div className="sm:col-span-6">
+                          <Label htmlFor={`services.${index}.name`}>Nome</Label>
                           <Input
-                            {...form.register(`services.${index}.name` as const)}
-                            placeholder="Ex: Instalação elétrica"
+                            id={`services.${index}.name`}
+                            {...form.register(`services.${index}.name`)}
+                            className="mt-1"
                           />
                         </div>
-                        <div>
-                          <FieldLabel
-                            label="Quantidade"
-                            tooltip="Quantidade de unidades ou horas do serviço"
-                          />
+                        <div className="sm:col-span-2">
+                          <Label htmlFor={`services.${index}.quantity`}>Quantidade</Label>
                           <Input
-                            {...form.register(`services.${index}.quantity` as const, {
-                              valueAsNumber: true,
-                            })}
+                            id={`services.${index}.quantity`}
                             type="number"
-                            placeholder="Ex: 2"
+                            {...form.register(`services.${index}.quantity`, { valueAsNumber: true })}
+                            className="mt-1"
+                            onChange={(e) => {
+                              const quantity = parseFloat(e.target.value);
+                              form.setValue(`services.${index}.quantity`, quantity);
+                              form.setValue(`services.${index}.total`, quantity * form.watch(`services.${index}.unitPrice`));
+                            }}
                           />
                         </div>
-                        <div>
-                          <FieldLabel
-                            label="Preço Unitário"
-                            tooltip="Valor cobrado por unidade ou hora do serviço"
-                          />
+                        <div className="sm:col-span-2">
+                          <Label htmlFor={`services.${index}.unitPrice`}>Preço Un.</Label>
                           <Input
-                            {...form.register(`services.${index}.unitPrice` as const, {
-                              valueAsNumber: true,
-                            })}
+                            id={`services.${index}.unitPrice`}
                             type="number"
-                            placeholder="Ex: 150,00"
+                            step="0.01"
+                            {...form.register(`services.${index}.unitPrice`, { valueAsNumber: true })}
+                            className="mt-1"
+                            onChange={(e) => {
+                              const unitPrice = parseFloat(e.target.value);
+                              form.setValue(`services.${index}.unitPrice`, unitPrice);
+                              form.setValue(`services.${index}.total`, form.watch(`services.${index}.quantity`) * unitPrice);
+                            }}
                           />
+                        </div>
+                        <div className="sm:col-span-1">
+                          <Label>Total</Label>
+                          <p className="mt-2 text-sm font-medium">
+                            R$ {(form.watch(`services.${index}.total`) || 0).toFixed(2)}
+                          </p>
+                        </div>
+                        <div className="sm:col-span-1">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-500 hover:text-red-700 mt-6"
+                            onClick={() => services.remove(index)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        onClick={() => services.remove(index)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() =>
-                      services.append({ name: "", quantity: 0, unitPrice: 0 })
-                    }
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Adicionar Serviço
-                  </Button>
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              <div>
-                <Label>Materiais</Label>
-                <div className="space-y-4">
-                  {materials.fields.map((field, index) => (
-                    <div key={field.id} className="space-y-2">
-                      <div className="grid grid-cols-3 gap-4">
-                        <div>
-                          <FieldLabel
-                            label="Nome do Material"
-                            tooltip="Especifique o material necessário"
-                          />
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <Label>Materiais</Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => materials.append({ name: "", quantity: 0, unitPrice: 0, total: 0 })}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Adicionar Material
+                    </Button>
+                  </div>
+                  <div className="space-y-4">
+                    {materials.fields.map((field, index) => (
+                      <div key={field.id} className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-start bg-gray-50 p-4 rounded-lg">
+                        <div className="sm:col-span-6">
+                          <Label htmlFor={`materials.${index}.name`}>Nome</Label>
                           <Input
-                            {...form.register(`materials.${index}.name` as const)}
-                            placeholder="Ex: Cabo elétrico 2.5mm"
+                            id={`materials.${index}.name`}
+                            {...form.register(`materials.${index}.name`)}
+                            className="mt-1"
                           />
                         </div>
-                        <div>
-                          <FieldLabel
-                            label="Quantidade"
-                            tooltip="Quantidade necessária do material"
-                          />
+                        <div className="sm:col-span-2">
+                          <Label htmlFor={`materials.${index}.quantity`}>Quantidade</Label>
                           <Input
-                            {...form.register(`materials.${index}.quantity` as const, {
-                              valueAsNumber: true,
-                            })}
+                            id={`materials.${index}.quantity`}
                             type="number"
-                            placeholder="Ex: 100"
+                            {...form.register(`materials.${index}.quantity`, { valueAsNumber: true })}
+                            className="mt-1"
+                            onChange={(e) => {
+                              const quantity = parseFloat(e.target.value);
+                              form.setValue(`materials.${index}.quantity`, quantity);
+                              form.setValue(`materials.${index}.total`, quantity * form.watch(`materials.${index}.unitPrice`));
+                            }}
                           />
                         </div>
-                        <div>
-                          <FieldLabel
-                            label="Preço Unitário"
-                            tooltip="Valor por unidade do material"
-                          />
+                        <div className="sm:col-span-2">
+                          <Label htmlFor={`materials.${index}.unitPrice`}>Preço Un.</Label>
                           <Input
-                            {...form.register(`materials.${index}.unitPrice` as const, {
-                              valueAsNumber: true,
-                            })}
+                            id={`materials.${index}.unitPrice`}
                             type="number"
-                            placeholder="Ex: 2,50"
+                            step="0.01"
+                            {...form.register(`materials.${index}.unitPrice`, { valueAsNumber: true })}
+                            className="mt-1"
+                            onChange={(e) => {
+                              const unitPrice = parseFloat(e.target.value);
+                              form.setValue(`materials.${index}.unitPrice`, unitPrice);
+                              form.setValue(`materials.${index}.total`, form.watch(`materials.${index}.quantity`) * unitPrice);
+                            }}
                           />
+                        </div>
+                        <div className="sm:col-span-1">
+                          <Label>Total</Label>
+                          <p className="mt-2 text-sm font-medium">
+                            R$ {(form.watch(`materials.${index}.total`) || 0).toFixed(2)}
+                          </p>
+                        </div>
+                        <div className="sm:col-span-1">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-500 hover:text-red-700 mt-6"
+                            onClick={() => materials.remove(index)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        onClick={() => materials.remove(index)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() =>
-                      materials.append({ name: "", quantity: 0, unitPrice: 0 })
-                    }
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Adicionar Material
-                  </Button>
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              <div>
-                <div className="space-y-2">
-                  <FieldLabel
-                    label="Mão de Obra"
-                    tooltip="Valor total cobrado pela mão de obra do serviço"
-                  />
-                  <Input
-                    {...form.register("laborCost")}
-                    type="number"
-                    placeholder="Ex: 500,00"
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="laborCost">Mão de Obra</Label>
+                    <Input
+                      id="laborCost"
+                      type="number"
+                      step="0.01"
+                      {...form.register("laborCost")}
+                      className="mt-1"
+                      onChange={(e) => {
+                        const laborCost = parseFloat(e.target.value);
+                        form.setValue("laborCost", laborCost.toString());
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <Label>Total do Orçamento</Label>
+                    <p className="mt-2 text-lg font-bold">
+                      R$ {calculateTotals(form.watch()) + Number(form.watch("laborCost"))}
+                    </p>
+                  </div>
                 </div>
               </div>
 

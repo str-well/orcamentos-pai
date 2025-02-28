@@ -24,10 +24,8 @@ export async function registerRoutes(app: express.Router) {
   // Rotas de orçamentos
   app.get('/api/budgets', async (req: RequestWithUser, res: Response) => {
     try {
-      if (!req.user) {
-        return res.status(401).json({ error: 'Unauthorized' });
-      }
-      const budgets = await storage.getBudgetsByUserId(req.user.id);
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+      const budgets = await storage.getBudgetsByUserId(String(req.user.id));
       res.json(budgets);
     } catch (error) {
       res.status(500).json({ error: 'Erro ao buscar orçamentos' });

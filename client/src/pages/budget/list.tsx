@@ -139,8 +139,8 @@ export default function BudgetList() {
   }
 
   const filteredBudgets = budgets?.filter((budget) => {
-    const clientName = budget?.clientName?.toLowerCase() || '';
-    const clientCity = budget?.clientCity?.toLowerCase() || '';
+    const clientName = budget?.client_name?.toLowerCase() || '';
+    const clientCity = budget?.client_city?.toLowerCase() || '';
     const searchLower = search.toLowerCase();
 
     const matchesSearch =
@@ -149,14 +149,14 @@ export default function BudgetList() {
 
     const matchesStatus = !statusFilter || budget.status === statusFilter;
 
-    const budgetDate = new Date(budget.createdAt);
+    const budgetDate = new Date(budget.created_at);
     const matchesDateRange = (!dateFilter.from || budgetDate >= dateFilter.from) &&
       (!dateFilter.to || budgetDate <= dateFilter.to);
 
     return matchesSearch && matchesStatus && matchesDateRange;
   }).sort((a, b) => {
-    const dateA = new Date(a.createdAt).getTime();
-    const dateB = new Date(b.createdAt).getTime();
+    const dateA = new Date(a.created_at).getTime();
+    const dateB = new Date(b.created_at).getTime();
     return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
   });
 
@@ -298,12 +298,12 @@ export default function BudgetList() {
                           layout
                         >
                           <td className="py-2">#{budget.id}</td>
-                          <td className="py-2">{budget.clientName}</td>
+                          <td className="py-2">{budget.client_name}</td>
                           <td className="py-2">
-                            {budget.createdAt ? new Date(budget.createdAt).toLocaleString('pt-BR') : 'Data não disponível'}
+                            {budget.created_at ? new Date(budget.created_at).toLocaleString('pt-BR') : 'Data não disponível'}
                           </td>
-                          <td className="py-2">{budget.clientCity}</td>
-                          <td className="py-2">R$ {budget.totalCost}</td>
+                          <td className="py-2">{budget.client_city}</td>
+                          <td className="py-2">R$ {budget.total_cost}</td>
                           <td className="py-2 capitalize">
                             {budget.status === 'pending' ? 'Pendente' :
                               budget.status === 'approved' ? 'Aprovado' : 'Rejeitado'}
@@ -383,7 +383,7 @@ export default function BudgetList() {
                     <div>
                       <h2 className="text-2xl font-bold">Orçamento #{selectedBudget.id}</h2>
                       <p className="text-sm text-gray-500">
-                        Criado em {selectedBudget.createdAt ? new Date(selectedBudget.createdAt).toLocaleString('pt-BR') : 'Data não disponível'}
+                        Criado em {selectedBudget.created_at ? new Date(selectedBudget.created_at).toLocaleString('pt-BR') : 'Data não disponível'}
                       </p>
                     </div>
                     <div className="text-right">
@@ -397,15 +397,15 @@ export default function BudgetList() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <h3 className="font-semibold mb-2">Dados do Cliente</h3>
-                      <p>Nome: {selectedBudget.clientName}</p>
-                      <p>Endereço: {selectedBudget.clientAddress}</p>
-                      <p>Cidade: {selectedBudget.clientCity}</p>
-                      <p>Contato: {selectedBudget.clientContact}</p>
+                      <p>Nome: {selectedBudget.client_name}</p>
+                      <p>Endereço: {selectedBudget.client_address}</p>
+                      <p>Cidade: {selectedBudget.client_city}</p>
+                      <p>Contato: {selectedBudget.client_contact}</p>
                     </div>
                     <div>
                       <h3 className="font-semibold mb-2">Dados do Serviço</h3>
-                      <p>Local: {selectedBudget.workLocation}</p>
-                      <p>Tipo: {selectedBudget.serviceType}</p>
+                      <p>Local: {selectedBudget.work_location}</p>
+                      <p>Tipo: {selectedBudget.service_type}</p>
                       <p>Data: {new Date(selectedBudget.date).toLocaleDateString('pt-BR')}</p>
                     </div>
                   </div>
@@ -463,8 +463,8 @@ export default function BudgetList() {
                   )}
 
                   <div className="text-right space-y-1">
-                    <p>Mão de Obra: R$ {selectedBudget.laborCost}</p>
-                    <p className="text-lg font-bold">Total: R$ {selectedBudget.totalCost}</p>
+                    <p>Mão de Obra: R$ {selectedBudget.labor_cost}</p>
+                    <p className="text-lg font-bold">Total: R$ {selectedBudget.total_cost}</p>
                   </div>
                 </motion.div>
               </DialogContent>

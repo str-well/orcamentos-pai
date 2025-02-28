@@ -113,16 +113,16 @@ export async function generateBudgetPDF(budget: Budget): Promise<Buffer> {
          .fontSize(10)
          .moveDown(1);
 
-      // Grid de informações do cliente
-      const clientGrid = [
-        ['Cliente:', budget.clientName, 'Data:', new Date(budget.date).toLocaleDateString('pt-BR')],
-        ['Endereço:', budget.clientAddress, 'Local:', budget.workLocation],
-        ['Cidade:', budget.clientCity, 'Tipo:', budget.serviceType],
-        ['Contato:', budget.clientContact, '', '']
+      // Grid de informações
+      const infoGrid = [
+        ['Cliente:', budget.client_name, 'Data:', new Date(budget.date).toLocaleDateString('pt-BR')],
+        ['Endereço:', budget.client_address, 'Local:', budget.work_location],
+        ['Cidade:', budget.client_city, 'Tipo:', budget.service_type],
+        ['Contato:', budget.client_contact, '', '']
       ];
 
       let currentY = clientInfoY + 40;
-      clientGrid.forEach(row => {
+      infoGrid.forEach(row => {
         doc.font(FONTS.bold)
            .text(row[0], 70, currentY)
            .font(FONTS.normal)
@@ -199,18 +199,24 @@ export async function generateBudgetPDF(budget: Budget): Promise<Buffer> {
       doc.rect(doc.page.width - 250, yPos, 200, 100)
          .fill(COLORS.lightBlue);
 
-      doc.font(FONTS.normal)
+      // Mão de obra
+      doc.fillColor(COLORS.text)
          .fontSize(12)
-         .fillColor(COLORS.text)
          .text('Mão de Obra:', doc.page.width - 230, yPos + 20)
-         .text(`R$ ${Number(budget.laborCost).toFixed(2)}`, doc.page.width - 100, yPos + 20, { align: 'right' });
+         .text(`R$ ${Number(budget.labor_cost).toFixed(2)}`, doc.page.width - 100, yPos + 20, { align: 'right' });
 
-      drawHorizontalLine(yPos + 50);
+      // Linha divisória
+      doc.strokeColor(COLORS.border)
+         .moveTo(doc.page.width - 230, yPos + 40)
+         .lineTo(doc.page.width - 100, yPos + 40)
+         .stroke();
 
-      doc.font(FONTS.bold)
+      // Total geral
+      doc.fillColor(COLORS.primary)
          .fontSize(16)
-         .text('Total:', doc.page.width - 230, yPos + 60)
-         .text(`R$ ${Number(budget.totalCost).toFixed(2)}`, doc.page.width - 100, yPos + 60, { align: 'right' });
+         .font(FONTS.bold)
+         .text('TOTAL:', doc.page.width - 230, yPos + 60)
+         .text(`R$ ${Number(budget.total_cost).toFixed(2)}`, doc.page.width - 100, yPos + 60, { align: 'right' });
 
       // Rodapé
       const footerY = doc.page.height - 50;

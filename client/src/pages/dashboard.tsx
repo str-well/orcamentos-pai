@@ -60,15 +60,15 @@ export default function Dashboard() {
       return budgetDate.getMonth() === currentMonth &&
         budgetDate.getFullYear() === currentYear;
     })
-    .reduce((total, budget) => total + parseFloat(budget.totalCost), 0);
+    .reduce((total, budget) => total + parseFloat(budget.total_cost), 0);
 
   const yearlyRevenue = approvedBudgets
     .filter(b => new Date(b.date).getFullYear() === currentYear)
-    .reduce((total, budget) => total + parseFloat(budget.totalCost), 0);
+    .reduce((total, budget) => total + parseFloat(budget.total_cost), 0);
 
   // Dados para o gráfico de linha
   const monthlyBudgetCounts = budgets?.reduce((acc, budget) => {
-    const date = new Date(budget.date);
+    const date = new Date(budget.created_at);
     const monthYear = format(date, 'MMM/yy', { locale: ptBR });
 
     acc[monthYear] = (acc[monthYear] || 0) + 1;

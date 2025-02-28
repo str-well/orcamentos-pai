@@ -10,13 +10,13 @@ export const users = pgTable("users", {
 
 export const budgets = pgTable("budgets", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
-  clientName: text("client_name").notNull(),
-  clientAddress: text("client_address").notNull(),
-  clientCity: text("client_city").notNull(),
-  clientContact: text("client_contact").notNull(),
-  workLocation: text("work_location").notNull(),
-  serviceType: text("service_type").notNull(),
+  user_id: text("user_id").notNull(),
+  client_name: text("client_name").notNull(),
+  client_address: text("client_address").notNull(),
+  client_city: text("client_city").notNull(),
+  client_contact: text("client_contact").notNull(),
+  work_location: text("work_location").notNull(),
+  service_type: text("service_type").notNull(),
   date: text("date").notNull(),
   services: json("services").$type<Array<{
     name: string;
@@ -30,10 +30,13 @@ export const budgets = pgTable("budgets", {
     unitPrice: number;
     total: number;
   }>>().default([]),
-  laborCost: text("labor_cost").notNull(),
-  totalCost: text("total_cost").notNull(),
+  labor_cost: text("labor_cost").notNull(),
+  total_cost: text("total_cost").notNull(),
   status: text("status").notNull().default('pending'),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
+  created_at: timestamp("created_at").notNull().defaultNow(),
+  pdf_url: text("pdf_url"),
+  pdf_generated_at: timestamp("pdf_generated_at"),
+  status_updated_at: timestamp("status_updated_at")
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -78,19 +81,32 @@ export interface User {
 }
 export type Budget = {
   id: number;
-  userId: number;
-  clientName: string;
-  clientAddress: string;
-  clientCity: string;
-  clientContact: string;
-  workLocation: string;
-  serviceType: string;
+  user_id: string;
+  client_name: string;
+  client_address: string;
+  client_city: string;
+  client_contact: string;
+  work_location: string;
+  service_type: string;
   date: string;
-  services: BudgetItemArray;
-  materials: BudgetItemArray;
-  laborCost: string;
-  totalCost: string;
-  status: string;
-  createdAt: Date;
+  services: Array<{
+    name: string;
+    quantity: number;
+    unitPrice: number;
+    total: number;
+  }>;
+  materials: Array<{
+    name: string;
+    quantity: number;
+    unitPrice: number;
+    total: number;
+  }>;
+  labor_cost: string;
+  total_cost: string;
+  status: 'pending' | 'approved' | 'rejected';
+  created_at: string;
+  pdf_url?: string;
+  pdf_generated_at?: string;
+  status_updated_at?: string;
 };
 export type InsertBudget = z.infer<typeof insertBudgetSchema>;

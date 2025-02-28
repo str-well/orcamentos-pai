@@ -195,211 +195,230 @@ Deno.serve(async (req) => {
   }
 });
 
+// Função para validar os dados do orçamento
+function validateBudget(budget: Budget): void {
+  if (!budget.id) throw new Error('ID do orçamento não encontrado');
+  if (!budget.client_name) throw new Error('Nome do cliente não encontrado');
+  if (!budget.date) throw new Error('Data do orçamento não encontrada');
+  if (!Array.isArray(budget.services)) throw new Error('Lista de serviços inválida');
+  if (!Array.isArray(budget.materials)) throw new Error('Lista de materiais inválida');
+  if (typeof budget.labor_cost !== 'number') throw new Error('Custo de mão de obra inválido');
+  if (typeof budget.total_cost !== 'number') throw new Error('Custo total inválido');
+}
+
 // Função para gerar o PDF usando jsPDF
 async function generatePDF(budget: Budget): Promise<Uint8Array> {
-  const doc = new jsPDF();
-  
-  // Configurar fonte para suportar caracteres especiais
-  doc.setFont("helvetica");
+  try {
+    // Validar dados do orçamento
+    validateBudget(budget);
 
-  // Função auxiliar para criar sombras
-  const drawShadow = (x: number, y: number, width: number, height: number) => {
-    doc.setFillColor(COLORS.shadow);
-    doc.setGlobalAlpha(0.1);
-    doc.rect(x + 2, y + 2, width, height, 'F');
-    doc.setGlobalAlpha(1);
-  };
+    const doc = new jsPDF();
+    
+    // Configurar fonte para suportar caracteres especiais
+    doc.setFont("helvetica");
 
-  // Função para obter cor do status
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'approved': return COLORS.success;
-      case 'pending': return COLORS.pending;
-      case 'rejected': return COLORS.rejected;
-      default: return COLORS.text;
-    }
-  };
+    // Função auxiliar para criar sombras
+    const drawShadow = (x: number, y: number, width: number, height: number) => {
+      doc.setFillColor(COLORS.shadow);
+      doc.setGlobalAlpha(0.1);
+      doc.rect(x + 2, y + 2, width, height, 'F');
+      doc.setGlobalAlpha(1);
+    };
 
-  /* ------------------------------------------------------------------
-   * Cabeçalho
-   * ------------------------------------------------------------------ */
-  // Faixa superior
-  doc.setFillColor(COLORS.primary);
-  doc.rect(0, 0, doc.internal.pageSize.width, 60, 'F');
+    // Função para obter cor do status
+    const getStatusColor = (status: string) => {
+      switch (status) {
+        case 'approved': return COLORS.success;
+        case 'pending': return COLORS.pending;
+        case 'rejected': return COLORS.rejected;
+        default: return COLORS.text;
+      }
+    };
 
-  // Logo e informações da empresa
-  doc.setTextColor('white');
-  doc.setFontSize(28);
-  doc.setFont("helvetica", "bold");
-  doc.text('JH Serviços', 20, 30);
+    /* ------------------------------------------------------------------
+     * Cabeçalho
+     * ------------------------------------------------------------------ */
+    // Faixa superior
+    doc.setFillColor(COLORS.primary);
+    doc.rect(0, 0, doc.internal.pageSize.width, 60, 'F');
 
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
-  doc.text('CNPJ: 26.850.931/0001-72 | Tel: (11) 95224-9455', doc.internal.pageSize.width - 20, 25, { align: 'right' });
-  doc.text('Rua Doutor Fritz Martin, 225 - Vila Cruzeiro, São Paulo', doc.internal.pageSize.width - 20, 30, { align: 'right' });
-
-  // Número e Status do Orçamento
-  doc.setFillColor(COLORS.secondary);
-  drawShadow(20, 70, 170, 50);
-  doc.setFillColor('white');
-  doc.rect(20, 70, 170, 50, 'F');
-
-  doc.setTextColor(COLORS.text);
-  doc.setFontSize(12);
-  doc.text('ORÇAMENTO', 30, 85);
-  doc.setFontSize(24);
-  doc.setFont("helvetica", "bold");
-  doc.text(`#${budget.id}`, 30, 105);
-
-  // Status
-  const statusText = budget.status === 'pending' ? 'PENDENTE' :
-                    budget.status === 'approved' ? 'APROVADO' : 'REJEITADO';
-  
-  doc.setFillColor(getStatusColor(budget.status));
-  doc.roundedRect(doc.internal.pageSize.width - 100, 70, 80, 25, 3, 3, 'F');
-  doc.setTextColor('white');
-  doc.setFontSize(12);
-  doc.text(statusText, doc.internal.pageSize.width - 60, 85, { align: 'center' });
-
-  /* ------------------------------------------------------------------
-   * Informações do Cliente
-   * ------------------------------------------------------------------ */
-  // Card de informações
-  const clientY = 140;
-  drawShadow(20, clientY, doc.internal.pageSize.width - 40, 80);
-  doc.setFillColor('white');
-  doc.rect(20, clientY, doc.internal.pageSize.width - 40, 80, 'F');
-
-  // Título da seção
-  doc.setTextColor(COLORS.primary);
-  doc.setFontSize(14);
-  doc.setFont("helvetica", "bold");
-  doc.text('INFORMAÇÕES DO CLIENTE', 30, clientY + 20);
-
-  // Grid de informações
-  doc.setTextColor(COLORS.text);
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
-
-  const infoGrid = [
-    ['Cliente:', budget.client_name, 'Data:', new Date(budget.date).toLocaleDateString('pt-BR')],
-    ['Endereço:', budget.client_address, 'Local:', budget.work_location],
-    ['Cidade:', budget.client_city, 'Tipo:', budget.service_type]
-  ];
-
-  let yPos = clientY + 35;
-  infoGrid.forEach(row => {
+    // Logo e informações da empresa
+    doc.setTextColor('white');
+    doc.setFontSize(28);
     doc.setFont("helvetica", "bold");
-    doc.text(row[0], 30, yPos);
+    doc.text('JH Serviços', 20, 30);
+
+    doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
-    doc.text(row[1], 80, yPos);
+    doc.text('CNPJ: 26.850.931/0001-72 | Tel: (11) 95224-9455', doc.internal.pageSize.width - 20, 25, { align: 'right' });
+    doc.text('Rua Doutor Fritz Martin, 225 - Vila Cruzeiro, São Paulo', doc.internal.pageSize.width - 20, 30, { align: 'right' });
+
+    // Número e Status do Orçamento
+    doc.setFillColor(COLORS.secondary);
+    drawShadow(20, 70, 170, 50);
+    doc.setFillColor('white');
+    doc.rect(20, 70, 170, 50, 'F');
+
+    doc.setTextColor(COLORS.text);
+    doc.setFontSize(12);
+    doc.text('ORÇAMENTO', 30, 85);
+    doc.setFontSize(24);
     doc.setFont("helvetica", "bold");
-    doc.text(row[2], 160, yPos);
-    doc.setFont("helvetica", "normal");
-    doc.text(row[3], 190, yPos);
-    yPos += 15;
-  });
+    doc.text(`#${budget.id}`, 30, 105);
 
-  /* ------------------------------------------------------------------
-   * Tabelas de Itens
-   * ------------------------------------------------------------------ */
-  yPos = 240;
+    // Status
+    const statusText = budget.status === 'pending' ? 'PENDENTE' :
+                      budget.status === 'approved' ? 'APROVADO' : 'REJEITADO';
+    
+    doc.setFillColor(getStatusColor(budget.status));
+    doc.rect(doc.internal.pageSize.width - 100, 70, 80, 25, 'F');
+    doc.setTextColor('white');
+    doc.setFontSize(12);
+    doc.text(statusText, doc.internal.pageSize.width - 60, 85, { align: 'center' });
 
-  // Função para criar tabela estilizada
-  const createTable = (title: string, items: any[], startY: number) => {
+    /* ------------------------------------------------------------------
+     * Informações do Cliente
+     * ------------------------------------------------------------------ */
+    // Card de informações
+    const clientY = 140;
+    drawShadow(20, clientY, doc.internal.pageSize.width - 40, 80);
+    doc.setFillColor('white');
+    doc.rect(20, clientY, doc.internal.pageSize.width - 40, 80, 'F');
+
     // Título da seção
     doc.setTextColor(COLORS.primary);
     doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
-    doc.text(title, 20, startY);
+    doc.text('INFORMAÇÕES DO CLIENTE', 30, clientY + 20);
 
-    // Cabeçalho da tabela
-    const headerY = startY + 10;
-    doc.setFillColor(COLORS.primary);
-    doc.rect(20, headerY, doc.internal.pageSize.width - 40, 12, 'F');
-
-    doc.setTextColor('white');
+    // Grid de informações
+    doc.setTextColor(COLORS.text);
     doc.setFontSize(10);
-    doc.text('Item', 25, headerY + 8);
-    doc.text('Qtd', 130, headerY + 8);
-    doc.text('Valor Unit.', 160, headerY + 8);
-    doc.text('Total', doc.internal.pageSize.width - 45, headerY + 8);
+    doc.setFont("helvetica", "normal");
 
-    // Linhas da tabela
-    let currentY = headerY + 12;
-    items.forEach((item, index) => {
-      if (index % 2 === 0) {
-        doc.setFillColor(COLORS.secondary);
-        doc.rect(20, currentY, doc.internal.pageSize.width - 40, 12, 'F');
-      }
+    const infoGrid = [
+      ['Cliente:', budget.client_name, 'Data:', new Date(budget.date).toLocaleDateString('pt-BR')],
+      ['Endereço:', budget.client_address, 'Local:', budget.work_location],
+      ['Cidade:', budget.client_city, 'Tipo:', budget.service_type]
+    ];
 
-      doc.setTextColor(COLORS.text);
+    let yPos = clientY + 35;
+    infoGrid.forEach(row => {
+      doc.setFont("helvetica", "bold");
+      doc.text(row[0], 30, yPos);
       doc.setFont("helvetica", "normal");
-      doc.text(item.name, 25, currentY + 8);
-      doc.text(item.quantity.toString(), 130, currentY + 8);
-      doc.text(`R$ ${item.unitPrice.toFixed(2)}`, 160, currentY + 8);
-      doc.text(`R$ ${item.total.toFixed(2)}`, doc.internal.pageSize.width - 45, currentY + 8);
-
-      currentY += 12;
+      doc.text(row[1], 80, yPos);
+      doc.setFont("helvetica", "bold");
+      doc.text(row[2], 160, yPos);
+      doc.setFont("helvetica", "normal");
+      doc.text(row[3], 190, yPos);
+      yPos += 15;
     });
 
-    return currentY + 10;
-  };
+    /* ------------------------------------------------------------------
+     * Tabelas de Itens
+     * ------------------------------------------------------------------ */
+    yPos = 240;
 
-  // Renderizar tabelas
-  if (budget.services && budget.services.length > 0) {
-    yPos = createTable('SERVIÇOS', budget.services, yPos);
+    // Função para criar tabela estilizada
+    const createTable = (title: string, items: any[], startY: number) => {
+      // Título da seção
+      doc.setTextColor(COLORS.primary);
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text(title, 20, startY);
+
+      // Cabeçalho da tabela
+      const headerY = startY + 10;
+      doc.setFillColor(COLORS.primary);
+      doc.rect(20, headerY, doc.internal.pageSize.width - 40, 12, 'F');
+
+      doc.setTextColor('white');
+      doc.setFontSize(10);
+      doc.text('Item', 25, headerY + 8);
+      doc.text('Qtd', 130, headerY + 8);
+      doc.text('Valor Unit.', 160, headerY + 8);
+      doc.text('Total', doc.internal.pageSize.width - 45, headerY + 8);
+
+      // Linhas da tabela
+      let currentY = headerY + 12;
+      items.forEach((item, index) => {
+        if (index % 2 === 0) {
+          doc.setFillColor(COLORS.secondary);
+          doc.rect(20, currentY, doc.internal.pageSize.width - 40, 12, 'F');
+        }
+
+        doc.setTextColor(COLORS.text);
+        doc.setFont("helvetica", "normal");
+        doc.text(item.name, 25, currentY + 8);
+        doc.text(item.quantity.toString(), 130, currentY + 8);
+        doc.text(`R$ ${item.unitPrice.toFixed(2)}`, 160, currentY + 8);
+        doc.text(`R$ ${item.total.toFixed(2)}`, doc.internal.pageSize.width - 45, currentY + 8);
+
+        currentY += 12;
+      });
+
+      return currentY + 10;
+    };
+
+    // Renderizar tabelas
+    if (budget.services && budget.services.length > 0) {
+      yPos = createTable('SERVIÇOS', budget.services, yPos);
+    }
+
+    if (budget.materials && budget.materials.length > 0) {
+      yPos = createTable('MATERIAIS', budget.materials, yPos + 10);
+    }
+
+    /* ------------------------------------------------------------------
+     * Totais
+     * ------------------------------------------------------------------ */
+    // Card de totais
+    const totalsWidth = 200;
+    const totalsX = doc.internal.pageSize.width - totalsWidth - 20;
+    
+    drawShadow(totalsX, yPos, totalsWidth, 80);
+    doc.setFillColor('white');
+    doc.rect(totalsX, yPos, totalsWidth, 80, 'F');
+
+    // Mão de obra
+    doc.setTextColor(COLORS.textLight);
+    doc.setFontSize(12);
+    doc.text('Mão de Obra:', totalsX + 20, yPos + 20);
+    doc.setTextColor(COLORS.text);
+    doc.text(`R$ ${budget.labor_cost.toFixed(2)}`, totalsX + totalsWidth - 20, yPos + 20, { align: 'right' });
+
+    // Linha divisória
+    doc.setDrawColor(COLORS.border);
+    doc.line(totalsX + 20, yPos + 40, totalsX + totalsWidth - 20, yPos + 40);
+
+    // Total geral
+    doc.setTextColor(COLORS.primary);
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text('TOTAL:', totalsX + 20, yPos + 60);
+    doc.text(`R$ ${budget.total_cost.toFixed(2)}`, totalsX + totalsWidth - 20, yPos + 60, { align: 'right' });
+
+    /* ------------------------------------------------------------------
+     * Rodapé
+     * ------------------------------------------------------------------ */
+    const footerY = doc.internal.pageSize.height - 30;
+    doc.setDrawColor(COLORS.border);
+    doc.line(20, footerY, doc.internal.pageSize.width - 20, footerY);
+
+    doc.setTextColor(COLORS.textLight);
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.text('Este orçamento é válido por 15 dias. Após este período, os valores podem sofrer alterações.', doc.internal.pageSize.width / 2, footerY + 10, { align: 'center' });
+    doc.text('JH Serviços © ' + new Date().getFullYear(), doc.internal.pageSize.width / 2, footerY + 20, { align: 'center' });
+
+    // Converter o PDF para Uint8Array
+    const pdfBytes = doc.output('arraybuffer');
+    return new Uint8Array(pdfBytes);
+  } catch (error) {
+    console.error('Erro detalhado na geração do PDF:', error);
+    throw new Error(`Falha ao gerar PDF: ${error.message}`);
   }
-
-  if (budget.materials && budget.materials.length > 0) {
-    yPos = createTable('MATERIAIS', budget.materials, yPos + 10);
-  }
-
-  /* ------------------------------------------------------------------
-   * Totais
-   * ------------------------------------------------------------------ */
-  // Card de totais
-  const totalsWidth = 200;
-  const totalsX = doc.internal.pageSize.width - totalsWidth - 20;
-  
-  drawShadow(totalsX, yPos, totalsWidth, 80);
-  doc.setFillColor('white');
-  doc.rect(totalsX, yPos, totalsWidth, 80, 'F');
-
-  // Mão de obra
-  doc.setTextColor(COLORS.textLight);
-  doc.setFontSize(12);
-  doc.text('Mão de Obra:', totalsX + 20, yPos + 20);
-  doc.setTextColor(COLORS.text);
-  doc.text(`R$ ${budget.labor_cost.toFixed(2)}`, totalsX + totalsWidth - 20, yPos + 20, { align: 'right' });
-
-  // Linha divisória
-  doc.setDrawColor(COLORS.border);
-  doc.line(totalsX + 20, yPos + 40, totalsX + totalsWidth - 20, yPos + 40);
-
-  // Total geral
-  doc.setTextColor(COLORS.primary);
-  doc.setFontSize(16);
-  doc.setFont("helvetica", "bold");
-  doc.text('TOTAL:', totalsX + 20, yPos + 60);
-  doc.text(`R$ ${budget.total_cost.toFixed(2)}`, totalsX + totalsWidth - 20, yPos + 60, { align: 'right' });
-
-  /* ------------------------------------------------------------------
-   * Rodapé
-   * ------------------------------------------------------------------ */
-  const footerY = doc.internal.pageSize.height - 30;
-  doc.setDrawColor(COLORS.border);
-  doc.line(20, footerY, doc.internal.pageSize.width - 20, footerY);
-
-  doc.setTextColor(COLORS.textLight);
-  doc.setFontSize(8);
-  doc.setFont("helvetica", "normal");
-  doc.text('Este orçamento é válido por 15 dias. Após este período, os valores podem sofrer alterações.', doc.internal.pageSize.width / 2, footerY + 10, { align: 'center' });
-  doc.text('JH Serviços © ' + new Date().getFullYear(), doc.internal.pageSize.width / 2, footerY + 20, { align: 'center' });
-
-  // Converter o PDF para Uint8Array
-  const pdfBytes = doc.output('arraybuffer');
-  return new Uint8Array(pdfBytes);
 }
 
 /* Para invocar localmente:

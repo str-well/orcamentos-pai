@@ -22,9 +22,9 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  getBudgetsByUserId(userId: number): Promise<Budget[]>;
+  getBudgetsByUserId(user_id: string): Promise<Budget[]>;
   getBudget(id: number): Promise<Budget | undefined>;
-  createBudget(budget: InsertBudget & { userId: number }): Promise<Budget>;
+  createBudget(budget: InsertBudget & { user_id: string }): Promise<Budget>;
   updateBudgetStatus(id: number, status: 'pending' | 'approved' | 'rejected'): Promise<Budget | undefined>;
   sessionStore: session.Store;
   generateBudgetPDF(id: number): Promise<Buffer>;
@@ -72,15 +72,30 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getBudgetsByUserId(userId: number): Promise<Budget[]> {
+  async getBudgetsByUserId(user_id: string): Promise<Budget[]> {
     try {
-      const results = await db.select().from(budgets).where(eq(budgets.userId, userId));
+      const results = await db.select().from(budgets).where(eq(budgets.user_id, user_id));
       
-      // Garantir que services e materials nunca são null
+      // Mapear os resultados do banco para o formato da interface Budget
       return results.map(budget => ({
-        ...budget,
+        id: budget.id,
+        user_id: budget.user_id,
+        client_name: budget.client_name,
+        client_address: budget.client_address,
+        client_city: budget.client_city,
+        client_contact: budget.client_contact,
+        work_location: budget.work_location,
+        service_type: budget.service_type,
+        date: budget.date,
         services: budget.services || [],
-        materials: budget.materials || []
+        materials: budget.materials || [],
+        labor_cost: budget.labor_cost,
+        total_cost: budget.total_cost,
+        status: budget.status as 'pending' | 'approved' | 'rejected',
+        created_at: budget.created_at.toISOString(),
+        pdf_url: budget.pdf_url || undefined,
+        pdf_generated_at: budget.pdf_generated_at?.toISOString(),
+        status_updated_at: budget.status_updated_at?.toISOString()
       }));
     } catch (error) {
       console.error('Error getting budgets:', error);
@@ -94,11 +109,26 @@ export class DatabaseStorage implements IStorage {
       
       if (!budget) return undefined;
 
-      // Garantir que services e materials nunca são null
+      // Mapear o resultado do banco para o formato da interface Budget
       return {
-        ...budget,
+        id: budget.id,
+        user_id: budget.user_id,
+        client_name: budget.client_name,
+        client_address: budget.client_address,
+        client_city: budget.client_city,
+        client_contact: budget.client_contact,
+        work_location: budget.work_location,
+        service_type: budget.service_type,
+        date: budget.date,
         services: budget.services || [],
-        materials: budget.materials || []
+        materials: budget.materials || [],
+        labor_cost: budget.labor_cost,
+        total_cost: budget.total_cost,
+        status: budget.status as 'pending' | 'approved' | 'rejected',
+        created_at: budget.created_at.toISOString(),
+        pdf_url: budget.pdf_url || undefined,
+        pdf_generated_at: budget.pdf_generated_at?.toISOString(),
+        status_updated_at: budget.status_updated_at?.toISOString()
       };
     } catch (error) {
       console.error('Error getting budget:', error);
@@ -106,32 +136,47 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async createBudget(budget: InsertBudget & { userId: number }): Promise<Budget> {
+  async createBudget(budget: InsertBudget & { user_id: string }): Promise<Budget> {
     try {
       const [newBudget] = await db
         .insert(budgets)
         .values({
-          userId: budget.userId,
-          clientName: budget.clientName,
-          clientAddress: budget.clientAddress,
-          clientCity: budget.clientCity,
-          clientContact: budget.clientContact,
-          workLocation: budget.workLocation,
-          serviceType: budget.serviceType,
+          user_id: budget.user_id,
+          client_name: budget.clientName,
+          client_address: budget.clientAddress,
+          client_city: budget.clientCity,
+          client_contact: budget.clientContact,
+          work_location: budget.workLocation,
+          service_type: budget.serviceType,
           date: budget.date,
           services: sql`${JSON.stringify(budget.services || [])}::jsonb`,
           materials: sql`${JSON.stringify(budget.materials || [])}::jsonb`,
-          laborCost: String(budget.laborCost),
-          totalCost: String(budget.totalCost),
-          status: 'pending'
+          labor_cost: budget.laborCost,
+          total_cost: budget.totalCost,
+          status: 'pending' as const
         })
         .returning();
 
       // Garantir que services e materials nunca são null
       return {
-        ...newBudget,
+        id: newBudget.id,
+        user_id: newBudget.user_id,
+        client_name: newBudget.client_name,
+        client_address: newBudget.client_address,
+        client_city: newBudget.client_city,
+        client_contact: newBudget.client_contact,
+        work_location: newBudget.work_location,
+        service_type: newBudget.service_type,
+        date: newBudget.date,
         services: newBudget.services || [],
-        materials: newBudget.materials || []
+        materials: newBudget.materials || [],
+        labor_cost: newBudget.labor_cost,
+        total_cost: newBudget.total_cost,
+        status: newBudget.status as 'pending' | 'approved' | 'rejected',
+        created_at: newBudget.created_at.toISOString(),
+        pdf_url: newBudget.pdf_url || undefined,
+        pdf_generated_at: newBudget.pdf_generated_at?.toISOString(),
+        status_updated_at: newBudget.status_updated_at?.toISOString()
       };
     } catch (error) {
       console.error('Error creating budget:', error);
@@ -146,7 +191,7 @@ export class DatabaseStorage implements IStorage {
     try {
       const [budget] = await db
         .update(budgets)
-        .set({ status })
+        .set({ status: status as 'pending' | 'approved' | 'rejected' })
         .where(eq(budgets.id, id))
         .returning();
       
@@ -154,9 +199,24 @@ export class DatabaseStorage implements IStorage {
 
       // Garantir que services e materials nunca são null
       return {
-        ...budget,
+        id: budget.id,
+        user_id: budget.user_id,
+        client_name: budget.client_name,
+        client_address: budget.client_address,
+        client_city: budget.client_city,
+        client_contact: budget.client_contact,
+        work_location: budget.work_location,
+        service_type: budget.service_type,
+        date: budget.date,
         services: budget.services || [],
-        materials: budget.materials || []
+        materials: budget.materials || [],
+        labor_cost: budget.labor_cost,
+        total_cost: budget.total_cost,
+        status: budget.status as 'pending' | 'approved' | 'rejected',
+        created_at: budget.created_at.toISOString(),
+        pdf_url: budget.pdf_url || undefined,
+        pdf_generated_at: budget.pdf_generated_at?.toISOString(),
+        status_updated_at: budget.status_updated_at?.toISOString()
       };
     } catch (error) {
       console.error('Error updating budget status:', error);

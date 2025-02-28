@@ -250,11 +250,11 @@ export default function Dashboard() {
                 <tbody>
                   {budgets?.slice(0, 5).map((budget) => (
                     <tr key={budget.id} className="border-b">
-                      <td className="py-2">{budget.clientName}</td>
+                      <td className="py-2">{budget.client_name}</td>
                       <td className="py-2">
                         {new Date(budget.date).toLocaleDateString('pt-BR')}
                       </td>
-                      <td className="py-2">R$ {budget.totalCost}</td>
+                      <td className="py-2">R$ {budget.total_cost}</td>
                       <td className="py-2 capitalize">
                         {budget.status === 'pending' ? 'Pendente' :
                           budget.status === 'approved' ? 'Aprovado' : 'Rejeitado'}

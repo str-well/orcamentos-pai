@@ -86,9 +86,7 @@ export default function BudgetList() {
     },
   });
 
-  const generatePDF = async (budget: Budget, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const generatePDF = async (budget: Budget) => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
 
@@ -208,16 +206,16 @@ export default function BudgetList() {
 
                 <div className="space-y-2">
                   <Label>Período</Label>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <Popover>
                       <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-[150px] pl-3 text-left font-normal">
+                        <Button variant="outline" className="w-full sm:w-[150px] pl-3 text-left font-normal justify-between">
                           {dateFilter.from ? (
                             format(dateFilter.from, "dd/MM/yyyy")
                           ) : (
                             <span>De</span>
                           )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          <CalendarIcon className="h-4 w-4 opacity-50" />
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
@@ -232,15 +230,16 @@ export default function BudgetList() {
                         />
                       </PopoverContent>
                     </Popover>
+                    
                     <Popover>
                       <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-[150px] pl-3 text-left font-normal">
+                        <Button variant="outline" className="w-full sm:w-[150px] pl-3 text-left font-normal justify-between">
                           {dateFilter.to ? (
                             format(dateFilter.to, "dd/MM/yyyy")
                           ) : (
                             <span>Até</span>
                           )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          <CalendarIcon className="h-4 w-4 opacity-50" />
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
@@ -323,20 +322,27 @@ export default function BudgetList() {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={(e) => generatePDF(budget, e)}
+                                  onClick={() => setSelectedBudget(budget)}
                                 >
                                   <Eye className="h-4 w-4" />
                                 </Button>
                               </motion.div>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => generatePDF(budget)}
+                              >
+                                <FileText className="h-4 w-4" />
+                              </Button>
                               {budget.status === "pending" && (
                                 <>
                                   <Button
                                     size="sm"
-                                    onClick={(e) =>
+                                    onClick={() =>
                                       updateStatusMutation.mutate({
                                         id: budget.id,
                                         status: "approved",
-                                      }, e)
+                                      })
                                     }
                                   >
                                     Aprovar
@@ -344,11 +350,11 @@ export default function BudgetList() {
                                   <Button
                                     size="sm"
                                     variant="destructive"
-                                    onClick={(e) =>
+                                    onClick={() =>
                                       updateStatusMutation.mutate({
                                         id: budget.id,
                                         status: "rejected",
-                                      }, e)
+                                      })
                                     }
                                   >
                                     Rejeitar

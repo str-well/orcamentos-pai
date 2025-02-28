@@ -316,10 +316,9 @@ async function generatePDF(budget: Budget): Promise<Uint8Array> {
     try {
       // Função auxiliar para criar sombras
       const drawShadow = (x: number, y: number, width: number, height: number) => {
-        doc.setFillColor(COLORS.shadow);
-        doc.setGlobalAlpha(0.1);
+        // Usar uma cor cinza clara para simular sombra
+        doc.setFillColor(240, 240, 240); // Cinza bem claro
         doc.rect(x + 2, y + 2, width, height, 'F');
-        doc.setGlobalAlpha(1);
       };
 
       // Função para obter cor do status

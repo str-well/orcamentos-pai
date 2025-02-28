@@ -59,6 +59,8 @@ interface Budget {
 }
 
 Deno.serve(async (req) => {
+  console.log('Nova requisição recebida');
+  
   // Lidar com requisições OPTIONS (preflight)
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -69,6 +71,7 @@ Deno.serve(async (req) => {
     const url = new URL(req.url);
     const pathParts = url.pathname.split('/');
     const budgetId = pathParts[pathParts.length - 1];
+    console.log('ID do orçamento:', budgetId);
 
     if (!budgetId) {
       return new Response(
@@ -88,6 +91,7 @@ Deno.serve(async (req) => {
 
     // Extrair o token de autenticação
     const token = authHeader.replace('Bearer ', '');
+    console.log('Token de autenticação recebido');
 
     // Criar cliente Supabase
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || 'https://dbxabmijgyxuazvdelpx.supabase.co';
@@ -100,32 +104,45 @@ Deno.serve(async (req) => {
         },
       },
     });
+    console.log('Cliente Supabase criado');
 
     // Buscar dados do orçamento
+    console.log('Buscando dados do orçamento...');
     const { data: budget, error: budgetError } = await supabase
       .from('budgets')
       .select('*')
       .eq('id', budgetId)
       .single();
 
-    if (budgetError || !budget) {
+    if (budgetError) {
       console.error('Erro ao buscar orçamento:', budgetError);
+      return new Response(
+        JSON.stringify({ error: `Erro ao buscar orçamento: ${budgetError.message}` }),
+        { status: 500, headers: corsHeaders }
+      );
+    }
+
+    if (!budget) {
+      console.error('Orçamento não encontrado');
       return new Response(
         JSON.stringify({ error: 'Orçamento não encontrado' }),
         { status: 404, headers: corsHeaders }
       );
     }
 
-    // Gerar PDF usando uma biblioteca ou serviço
-    // Aqui vamos simular a geração do PDF e upload para o Storage do Supabase
+    console.log('Dados do orçamento recuperados:', budget);
     
-    // Criar um arquivo PDF simples (simulação)
+    // Gerar PDF usando uma biblioteca ou serviço
+    console.log('Iniciando geração do PDF...');
     const pdfContent = await generatePDF(budget);
+    console.log('PDF gerado com sucesso');
     
     // Nome do arquivo
     const fileName = `orcamento_${budgetId}_${Date.now()}.pdf`;
+    console.log('Nome do arquivo:', fileName);
     
     // Fazer upload do PDF para o Storage
+    console.log('Iniciando upload do PDF...');
     const { data: uploadData, error: uploadError } = await supabase
       .storage
       .from('pdfs')
@@ -137,20 +154,33 @@ Deno.serve(async (req) => {
     if (uploadError) {
       console.error('Erro ao fazer upload do PDF:', uploadError);
       return new Response(
-        JSON.stringify({ error: 'Erro ao fazer upload do PDF' }),
+        JSON.stringify({ error: `Erro ao fazer upload do PDF: ${uploadError.message}` }),
         { status: 500, headers: corsHeaders }
       );
     }
 
+    console.log('PDF enviado com sucesso');
+
     // Obter URL pública do PDF
+    console.log('Obtendo URL pública...');
     const { data: urlData } = await supabase
       .storage
       .from('pdfs')
       .getPublicUrl(fileName);
 
+    if (!urlData) {
+      console.error('Erro ao obter URL pública do PDF');
+      return new Response(
+        JSON.stringify({ error: 'Erro ao obter URL pública do PDF' }),
+        { status: 500, headers: corsHeaders }
+      );
+    }
+
     const pdfUrl = urlData.publicUrl;
+    console.log('URL do PDF:', pdfUrl);
 
     // Atualizar o registro do orçamento com a URL do PDF
+    console.log('Atualizando registro do orçamento...');
     const { error: updateError } = await supabase
       .from('budgets')
       .update({
@@ -162,10 +192,12 @@ Deno.serve(async (req) => {
     if (updateError) {
       console.error('Erro ao atualizar orçamento:', updateError);
       return new Response(
-        JSON.stringify({ error: 'Erro ao atualizar orçamento com URL do PDF' }),
+        JSON.stringify({ error: `Erro ao atualizar orçamento: ${updateError.message}` }),
         { status: 500, headers: corsHeaders }
       );
     }
+
+    console.log('Registro atualizado com sucesso');
 
     // Retornar resposta com URL do PDF
     const data = {
@@ -174,7 +206,7 @@ Deno.serve(async (req) => {
       pdfUrl: pdfUrl,
     };
 
-    // Redirecionar para o PDF
+    console.log('Retornando resposta de sucesso');
     return new Response(
       JSON.stringify(data),
       { 
@@ -186,10 +218,15 @@ Deno.serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error('Erro ao gerar PDF:', error);
+    console.error('Erro detalhado ao gerar PDF:', error);
+    console.error('Stack trace:', error.stack);
     
     return new Response(
-      JSON.stringify({ error: 'Erro ao gerar o PDF' }),
+      JSON.stringify({ 
+        error: 'Erro ao gerar o PDF',
+        details: error.message,
+        stack: error.stack
+      }),
       { status: 500, headers: corsHeaders }
     );
   }
@@ -197,17 +234,67 @@ Deno.serve(async (req) => {
 
 // Função para validar os dados do orçamento
 function validateBudget(budget: Budget): void {
-  if (!budget.id) throw new Error('ID do orçamento não encontrado');
-  if (!budget.client_name) throw new Error('Nome do cliente não encontrado');
-  if (!budget.date) throw new Error('Data do orçamento não encontrada');
-  if (!Array.isArray(budget.services)) throw new Error('Lista de serviços inválida');
-  if (!Array.isArray(budget.materials)) throw new Error('Lista de materiais inválida');
-  if (!budget.labor_cost) throw new Error('Custo de mão de obra não encontrado');
-  if (!budget.total_cost) throw new Error('Custo total não encontrado');
+  console.log('Iniciando validação do orçamento');
+  
+  // Validar campos obrigatórios
+  const requiredFields = {
+    id: budget.id,
+    client_name: budget.client_name,
+    client_address: budget.client_address,
+    client_city: budget.client_city,
+    client_contact: budget.client_contact,
+    work_location: budget.work_location,
+    service_type: budget.service_type,
+    date: budget.date,
+    labor_cost: budget.labor_cost,
+    total_cost: budget.total_cost
+  };
+
+  for (const [field, value] of Object.entries(requiredFields)) {
+    if (!value) {
+      console.error(`Campo obrigatório não encontrado: ${field}`);
+      throw new Error(`Campo obrigatório não encontrado: ${field}`);
+    }
+  }
+
+  // Validar arrays
+  if (!Array.isArray(budget.services)) {
+    console.error('Lista de serviços inválida');
+    throw new Error('Lista de serviços inválida');
+  }
+
+  if (!Array.isArray(budget.materials)) {
+    console.error('Lista de materiais inválida');
+    throw new Error('Lista de materiais inválida');
+  }
+
+  // Validar itens dos arrays
+  budget.services.forEach((service, index) => {
+    if (!service.name || typeof service.quantity !== 'number' || typeof service.unitPrice !== 'number') {
+      console.error(`Serviço inválido no índice ${index}:`, service);
+      throw new Error(`Serviço inválido no índice ${index}`);
+    }
+  });
+
+  budget.materials.forEach((material, index) => {
+    if (!material.name || typeof material.quantity !== 'number' || typeof material.unitPrice !== 'number') {
+      console.error(`Material inválido no índice ${index}:`, material);
+      throw new Error(`Material inválido no índice ${index}`);
+    }
+  });
   
   // Validar se os valores são números válidos
-  if (isNaN(Number(budget.labor_cost))) throw new Error('Custo de mão de obra inválido');
-  if (isNaN(Number(budget.total_cost))) throw new Error('Custo total inválido');
+  if (isNaN(Number(budget.labor_cost))) {
+    console.error('Custo de mão de obra inválido:', budget.labor_cost);
+    throw new Error('Custo de mão de obra inválido');
+  }
+  
+  if (isNaN(Number(budget.total_cost))) {
+    console.error('Custo total inválido:', budget.total_cost);
+    throw new Error('Custo total inválido');
+  }
+
+  console.log('Validação do orçamento concluída com sucesso');
 }
 
 // Função para gerar o PDF usando jsPDF
@@ -224,6 +311,7 @@ async function generatePDF(budget: Budget): Promise<Uint8Array> {
     
     // Configurar fonte para suportar caracteres especiais
     doc.setFont("helvetica");
+    console.log('Fonte configurada');
 
     try {
       // Função auxiliar para criar sombras

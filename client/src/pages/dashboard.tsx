@@ -21,15 +21,38 @@ import { Header } from "@/components/shared/Header";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { motion } from "framer-motion";
+import { supabase } from "@/lib/supabase";
 
 export default function Dashboard() {
   const { logoutMutation } = useAuth();
 
-  const { data: budgets, isLoading } = useQuery<Budget[]>({
-    queryKey: ["budgets"],
+  // Primeiro, buscar o usuário autenticado
+  const { data: userData, isLoading: isLoadingUser } = useQuery({
+    queryKey: ['user'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      return user;
+    }
   });
 
-  if (isLoading) {
+  // Depois, buscar os orçamentos usando o ID do usuário
+  const { data: budgets, isLoading: isLoadingBudgets } = useQuery({
+    queryKey: ['budgets', userData?.id],
+    queryFn: async () => {
+      if (!userData?.id) throw new Error('Usuário não autenticado');
+
+      const { data, error } = await supabase
+        .from('budgets')
+        .select('*')
+        .eq('user_id', userData.id);
+
+      if (error) throw error;
+      return data as Budget[];
+    },
+    enabled: !!userData?.id // Só executa quando tivermos o ID do usuário
+  });
+
+  if (isLoadingUser || isLoadingBudgets) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-border" />

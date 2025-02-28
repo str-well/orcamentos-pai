@@ -4,34 +4,29 @@ import { queryClient } from "@/lib/queryClient";
 import { User } from "@shared/schema";
 import { supabase } from "@/lib/supabase";
 
-interface AuthMutationVariables {
-  path: string;
-  data: {
-    username: string;
-    password: string;
-  };
-}
-
 interface AuthContextType {
   user: User | null | undefined;
   isLoading: boolean;
   loginMutation: ReturnType<typeof useMutation>;
   registerMutation: ReturnType<typeof useMutation>;
+  logoutMutation: ReturnType<typeof useMutation>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { data: user, isLoading } = useQuery<User | null>({
+  const { data: user, isLoading } = useQuery({
     queryKey: ["/api/auth/user"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       return user;
-    }
+    },
+    staleTime: 0, // Sempre buscar dados frescos
+    refetchOnMount: true // Recarregar ao montar
   });
 
   const loginMutation = useMutation({
-    mutationFn: async ({ data }: AuthMutationVariables) => {
+    mutationFn: async ({ data }: { data: { username: string; password: string } }) => {
       const { data: result, error } = await supabase.auth.signInWithPassword({
         email: data.username,
         password: data.password,
@@ -41,17 +36,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      queryClient.invalidateQueries({ queryKey: ["budgets"] });
     },
   });
 
   const registerMutation = useMutation({
-    mutationFn: async (variables: AuthMutationVariables) => {
-      const res = await apiRequest("POST", variables.path, variables.data);
-      return res.json();
+    mutationFn: async (variables: { path: string; data: { username: string; password: string } }) => {
+      const { data: result, error } = await supabase.auth.signUp({
+        email: variables.data.username,
+        password: variables.data.password,
+      });
+      if (error) throw error;
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
     },
+  });
+
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      await supabase.auth.signOut();
+    },
+    onSuccess: () => {
+      queryClient.clear();
+    }
   });
 
   const contextValue: AuthContextType = {
@@ -59,6 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLoading,
     loginMutation,
     registerMutation,
+    logoutMutation
   };
 
   return (

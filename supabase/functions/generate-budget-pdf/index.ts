@@ -302,23 +302,24 @@ async function generatePDF(budget: Budget): Promise<Uint8Array> {
   try {
     console.log('Iniciando geração do PDF para orçamento:', budget.id);
     
-    // Validar dados do orçamento
     validateBudget(budget);
     console.log('Dados do orçamento validados com sucesso');
 
-    const doc = new jsPDF();
-    console.log('Documento PDF criado');
+    // Criar documento com margens menores
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
     
-    // Configurar fonte para suportar caracteres especiais
+    console.log('Documento PDF criado');
     doc.setFont("helvetica");
-    console.log('Fonte configurada');
 
     try {
-      // Função auxiliar para criar sombras
+      // Função auxiliar para criar sombras (reduzida)
       const drawShadow = (x: number, y: number, width: number, height: number) => {
-        // Usar uma cor cinza clara para simular sombra
-        doc.setFillColor(240, 240, 240); // Cinza bem claro
-        doc.rect(x + 2, y + 2, width, height, 'F');
+        doc.setFillColor(240, 240, 240);
+        doc.rect(x + 1, y + 1, width, height, 'F');
       };
 
       // Função para obter cor do status
@@ -331,66 +332,61 @@ async function generatePDF(budget: Budget): Promise<Uint8Array> {
         }
       };
 
-      console.log('Iniciando renderização do cabeçalho');
       /* ------------------------------------------------------------------
-       * Cabeçalho
+       * Cabeçalho (reduzido)
        * ------------------------------------------------------------------ */
-      // Faixa superior
       doc.setFillColor(COLORS.primary);
-      doc.rect(0, 0, doc.internal.pageSize.width, 60, 'F');
+      doc.rect(0, 0, doc.internal.pageSize.width, 40, 'F');
 
-      // Logo e informações da empresa
+      // Logo e informações da empresa (compactas)
       doc.setTextColor('white');
-      doc.setFontSize(28);
+      doc.setFontSize(22);
       doc.setFont("helvetica", "bold");
-      doc.text('JH Serviços', 20, 30);
+      doc.text('JH Serviços', 10, 15);
 
-      doc.setFontSize(10);
+      doc.setFontSize(8);
       doc.setFont("helvetica", "normal");
-      doc.text('CNPJ: 26.850.931/0001-72 | Tel: (11) 95224-9455', doc.internal.pageSize.width - 20, 25, { align: 'right' });
-      doc.text('Rua Doutor Fritz Martin, 225 - Vila Cruzeiro, São Paulo', doc.internal.pageSize.width - 20, 30, { align: 'right' });
+      doc.text('CNPJ: 26.850.931/0001-72 | Tel: (11) 95224-9455', doc.internal.pageSize.width - 10, 12, { align: 'right' });
+      doc.text('Rua Doutor Fritz Martin, 225 - Vila Cruzeiro, São Paulo', doc.internal.pageSize.width - 10, 16, { align: 'right' });
 
-      // Número e Status do Orçamento
+      // Número e Status do Orçamento (compacto)
       doc.setFillColor(COLORS.secondary);
-      drawShadow(20, 70, 170, 50);
+      drawShadow(10, 45, 120, 30);
       doc.setFillColor('white');
-      doc.rect(20, 70, 170, 50, 'F');
+      doc.rect(10, 45, 120, 30, 'F');
 
       doc.setTextColor(COLORS.text);
-      doc.setFontSize(12);
-      doc.text('ORÇAMENTO', 30, 85);
-      doc.setFontSize(24);
+      doc.setFontSize(10);
+      doc.text('ORÇAMENTO', 15, 55);
+      doc.setFontSize(16);
       doc.setFont("helvetica", "bold");
-      doc.text(`#${budget.id}`, 30, 105);
+      doc.text(`#${budget.id}`, 15, 67);
 
-      // Status
+      // Status (compacto)
       const statusText = budget.status === 'pending' ? 'PENDENTE' :
                         budget.status === 'approved' ? 'APROVADO' : 'REJEITADO';
       
       doc.setFillColor(getStatusColor(budget.status));
-      doc.rect(doc.internal.pageSize.width - 100, 70, 80, 25, 'F');
+      doc.rect(doc.internal.pageSize.width - 70, 45, 60, 20, 'F');
       doc.setTextColor('white');
-      doc.setFontSize(12);
-      doc.text(statusText, doc.internal.pageSize.width - 60, 85, { align: 'center' });
+      doc.setFontSize(10);
+      doc.text(statusText, doc.internal.pageSize.width - 40, 57, { align: 'center' });
 
       /* ------------------------------------------------------------------
-       * Informações do Cliente
+       * Informações do Cliente (compactas)
        * ------------------------------------------------------------------ */
-      // Card de informações
-      const clientY = 140;
-      drawShadow(20, clientY, doc.internal.pageSize.width - 40, 80);
+      const clientY = 80;
+      drawShadow(10, clientY, doc.internal.pageSize.width - 20, 50);
       doc.setFillColor('white');
-      doc.rect(20, clientY, doc.internal.pageSize.width - 40, 80, 'F');
+      doc.rect(10, clientY, doc.internal.pageSize.width - 20, 50, 'F');
 
-      // Título da seção
       doc.setTextColor(COLORS.primary);
-      doc.setFontSize(14);
+      doc.setFontSize(12);
       doc.setFont("helvetica", "bold");
-      doc.text('INFORMAÇÕES DO CLIENTE', 30, clientY + 20);
+      doc.text('INFORMAÇÕES DO CLIENTE', 15, clientY + 10);
 
-      // Grid de informações
       doc.setTextColor(COLORS.text);
-      doc.setFontSize(10);
+      doc.setFontSize(8);
       doc.setFont("helvetica", "normal");
 
       const infoGrid = [
@@ -399,118 +395,107 @@ async function generatePDF(budget: Budget): Promise<Uint8Array> {
         ['Cidade:', budget.client_city, 'Tipo:', budget.service_type]
       ];
 
-      let yPos = clientY + 35;
+      let yPos = clientY + 20;
       infoGrid.forEach(row => {
         doc.setFont("helvetica", "bold");
-        doc.text(row[0], 30, yPos);
+        doc.text(row[0], 15, yPos);
         doc.setFont("helvetica", "normal");
-        doc.text(row[1], 80, yPos);
+        doc.text(row[1], 45, yPos);
         doc.setFont("helvetica", "bold");
-        doc.text(row[2], 160, yPos);
+        doc.text(row[2], 120, yPos);
         doc.setFont("helvetica", "normal");
-        doc.text(row[3], 190, yPos);
-        yPos += 15;
+        doc.text(row[3], 140, yPos);
+        yPos += 10;
       });
 
       /* ------------------------------------------------------------------
-       * Tabelas de Itens
+       * Tabelas (compactas)
        * ------------------------------------------------------------------ */
-      yPos = 240;
-
-      // Função para criar tabela estilizada
       const createTable = (title: string, items: any[], startY: number) => {
-        // Título da seção
         doc.setTextColor(COLORS.primary);
-        doc.setFontSize(14);
+        doc.setFontSize(12);
         doc.setFont("helvetica", "bold");
-        doc.text(title, 20, startY);
+        doc.text(title, 10, startY);
 
-        // Cabeçalho da tabela
-        const headerY = startY + 10;
+        const headerY = startY + 5;
         doc.setFillColor(COLORS.primary);
-        doc.rect(20, headerY, doc.internal.pageSize.width - 40, 12, 'F');
+        doc.rect(10, headerY, doc.internal.pageSize.width - 20, 8, 'F');
 
         doc.setTextColor('white');
-        doc.setFontSize(10);
-        doc.text('Item', 25, headerY + 8);
-        doc.text('Qtd', 130, headerY + 8);
-        doc.text('Valor Unit.', 160, headerY + 8);
-        doc.text('Total', doc.internal.pageSize.width - 45, headerY + 8);
+        doc.setFontSize(8);
+        doc.text('Item', 12, headerY + 6);
+        doc.text('Qtd', 100, headerY + 6);
+        doc.text('Valor Unit.', 130, headerY + 6);
+        doc.text('Total', doc.internal.pageSize.width - 25, headerY + 6);
 
-        // Linhas da tabela
-        let currentY = headerY + 12;
+        let currentY = headerY + 8;
         items.forEach((item, index) => {
           if (index % 2 === 0) {
             doc.setFillColor(COLORS.secondary);
-            doc.rect(20, currentY, doc.internal.pageSize.width - 40, 12, 'F');
+            doc.rect(10, currentY, doc.internal.pageSize.width - 20, 8, 'F');
           }
 
           doc.setTextColor(COLORS.text);
           doc.setFont("helvetica", "normal");
-          doc.text(item.name, 25, currentY + 8);
-          doc.text(item.quantity.toString(), 130, currentY + 8);
-          doc.text(`R$ ${item.unitPrice.toFixed(2)}`, 160, currentY + 8);
-          doc.text(`R$ ${item.total.toFixed(2)}`, doc.internal.pageSize.width - 45, currentY + 8);
+          doc.text(item.name.substring(0, 40), 12, currentY + 6);
+          doc.text(item.quantity.toString(), 100, currentY + 6);
+          doc.text(`R$ ${item.unitPrice.toFixed(2)}`, 130, currentY + 6);
+          doc.text(`R$ ${item.total.toFixed(2)}`, doc.internal.pageSize.width - 25, currentY + 6);
 
-          currentY += 12;
+          currentY += 8;
         });
 
-        return currentY + 10;
+        return currentY + 5;
       };
 
-      // Renderizar tabelas
+      yPos = 140;
       if (budget.services && budget.services.length > 0) {
         yPos = createTable('SERVIÇOS', budget.services, yPos);
       }
 
       if (budget.materials && budget.materials.length > 0) {
-        yPos = createTable('MATERIAIS', budget.materials, yPos + 10);
+        yPos = createTable('MATERIAIS', budget.materials, yPos + 5);
       }
 
       /* ------------------------------------------------------------------
-       * Totais
+       * Totais (compacto)
        * ------------------------------------------------------------------ */
-      // Card de totais
-      const totalsWidth = 200;
-      const totalsX = doc.internal.pageSize.width - totalsWidth - 20;
+      const totalsWidth = 150;
+      const totalsX = doc.internal.pageSize.width - totalsWidth - 10;
       
-      drawShadow(totalsX, yPos, totalsWidth, 80);
+      drawShadow(totalsX, yPos, totalsWidth, 40);
       doc.setFillColor('white');
-      doc.rect(totalsX, yPos, totalsWidth, 80, 'F');
+      doc.rect(totalsX, yPos, totalsWidth, 40, 'F');
 
-      // Mão de obra
       doc.setTextColor(COLORS.textLight);
-      doc.setFontSize(12);
-      doc.text('Mão de Obra:', totalsX + 20, yPos + 20);
+      doc.setFontSize(10);
+      doc.text('Mão de Obra:', totalsX + 10, yPos + 15);
       doc.setTextColor(COLORS.text);
-      doc.text(`R$ ${Number(budget.labor_cost).toFixed(2)}`, totalsX + totalsWidth - 20, yPos + 20, { align: 'right' });
+      doc.text(`R$ ${Number(budget.labor_cost).toFixed(2)}`, totalsX + totalsWidth - 10, yPos + 15, { align: 'right' });
 
-      // Linha divisória
       doc.setDrawColor(COLORS.border);
-      doc.line(totalsX + 20, yPos + 40, totalsX + totalsWidth - 20, yPos + 40);
+      doc.line(totalsX + 10, yPos + 20, totalsX + totalsWidth - 10, yPos + 20);
 
-      // Total geral
       doc.setTextColor(COLORS.primary);
-      doc.setFontSize(16);
+      doc.setFontSize(12);
       doc.setFont("helvetica", "bold");
-      doc.text('TOTAL:', totalsX + 20, yPos + 60);
-      doc.text(`R$ ${Number(budget.total_cost).toFixed(2)}`, totalsX + totalsWidth - 20, yPos + 60, { align: 'right' });
+      doc.text('TOTAL:', totalsX + 10, yPos + 35);
+      doc.text(`R$ ${Number(budget.total_cost).toFixed(2)}`, totalsX + totalsWidth - 10, yPos + 35, { align: 'right' });
 
       /* ------------------------------------------------------------------
-       * Rodapé
+       * Rodapé (compacto)
        * ------------------------------------------------------------------ */
-      const footerY = doc.internal.pageSize.height - 30;
+      const footerY = doc.internal.pageSize.height - 15;
       doc.setDrawColor(COLORS.border);
-      doc.line(20, footerY, doc.internal.pageSize.width - 20, footerY);
+      doc.line(10, footerY, doc.internal.pageSize.width - 10, footerY);
 
       doc.setTextColor(COLORS.textLight);
-      doc.setFontSize(8);
+      doc.setFontSize(7);
       doc.setFont("helvetica", "normal");
-      doc.text('Este orçamento é válido por 15 dias. Após este período, os valores podem sofrer alterações.', doc.internal.pageSize.width / 2, footerY + 10, { align: 'center' });
-      doc.text('JH Serviços © ' + new Date().getFullYear(), doc.internal.pageSize.width / 2, footerY + 20, { align: 'center' });
+      doc.text('Este orçamento é válido por 15 dias. Após este período, os valores podem sofrer alterações.', doc.internal.pageSize.width / 2, footerY + 5, { align: 'center' });
+      doc.text('JH Serviços © ' + new Date().getFullYear(), doc.internal.pageSize.width / 2, footerY + 10, { align: 'center' });
 
       console.log('PDF gerado com sucesso');
-      // Converter o PDF para Uint8Array
       const pdfBytes = doc.output('arraybuffer');
       return new Uint8Array(pdfBytes);
     } catch (error) {

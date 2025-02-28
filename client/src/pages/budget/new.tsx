@@ -449,14 +449,34 @@ export default function NewBudget() {
                       }}
                     />
                   </div>
-                  <div>
-                    <Label>Total do Orçamento</Label>
-                    <p className="mt-2 text-lg font-bold">
-                      {(() => {
-                        const totals = calculateTotals(form.watch());
-                        return `R$ ${totals.servicesTotal + totals.materialsTotal + Number(form.watch("laborCost"))}`;
-                      })()}
-                    </p>
+                  <div className="space-y-2">
+                    <div>
+                      <Label>Total de Materiais</Label>
+                      <p className="mt-1 text-sm font-medium">
+                        {(() => {
+                          const totals = calculateTotals(form.watch());
+                          return `R$ ${totals.materialsTotal.toFixed(2)}`;
+                        })()}
+                      </p>
+                    </div>
+                    <div>
+                      <Label>Total de Serviços</Label>
+                      <p className="mt-1 text-sm font-medium">
+                        {(() => {
+                          const totals = calculateTotals(form.watch());
+                          return `R$ ${totals.servicesTotal.toFixed(2)}`;
+                        })()}
+                      </p>
+                    </div>
+                    <div>
+                      <Label>Total do Orçamento</Label>
+                      <p className="mt-1 text-lg font-bold">
+                        {(() => {
+                          const totals = calculateTotals(form.watch());
+                          return `R$ ${(totals.servicesTotal + totals.materialsTotal + Number(form.watch("laborCost"))).toFixed(2)}`;
+                        })()}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>

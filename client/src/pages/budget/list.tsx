@@ -86,7 +86,9 @@ export default function BudgetList() {
     },
   });
 
-  const generatePDF = async (budget: Budget) => {
+  const generatePDF = async (budget: Budget, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     try {
       const { data: { session } } = await supabase.auth.getSession();
 
@@ -321,27 +323,20 @@ export default function BudgetList() {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => setSelectedBudget(budget)}
+                                  onClick={(e) => generatePDF(budget, e)}
                                 >
                                   <Eye className="h-4 w-4" />
                                 </Button>
                               </motion.div>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => generatePDF(budget)}
-                              >
-                                <FileText className="h-4 w-4" />
-                              </Button>
                               {budget.status === "pending" && (
                                 <>
                                   <Button
                                     size="sm"
-                                    onClick={() =>
+                                    onClick={(e) =>
                                       updateStatusMutation.mutate({
                                         id: budget.id,
                                         status: "approved",
-                                      })
+                                      }, e)
                                     }
                                   >
                                     Aprovar
@@ -349,11 +344,11 @@ export default function BudgetList() {
                                   <Button
                                     size="sm"
                                     variant="destructive"
-                                    onClick={() =>
+                                    onClick={(e) =>
                                       updateStatusMutation.mutate({
                                         id: budget.id,
                                         status: "rejected",
-                                      })
+                                      }, e)
                                     }
                                   >
                                     Rejeitar

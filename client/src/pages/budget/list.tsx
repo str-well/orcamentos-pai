@@ -98,10 +98,13 @@ export default function BudgetList() {
       });
 
       if (!response.ok) {
-        throw new Error('Falha ao gerar PDF');
+        const errorData = await response.json();
+        console.error('Erro na geração do PDF:', errorData);
+        throw new Error(errorData.error || 'Falha ao gerar PDF');
       }
 
       const data = await response.json();
+      console.log('Resposta da geração do PDF:', data);
 
       // Verificar se a URL do PDF está disponível
       if (data.pdfUrl) {
@@ -111,9 +114,10 @@ export default function BudgetList() {
         throw new Error('URL do PDF não disponível');
       }
     } catch (error) {
+      console.error('Erro detalhado:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível gerar o PDF",
+        description: error instanceof Error ? error.message : "Não foi possível gerar o PDF",
         variant: "destructive",
       });
     }

@@ -5,28 +5,71 @@
 // Setup type definitions for built-in Supabase Runtime APIs
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 
-console.log("Hello from Functions!")
+console.log("Generate Budget PDF Function Started!")
+
+// Configuração dos cabeçalhos CORS
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Content-Type': 'application/json',
+};
 
 Deno.serve(async (req) => {
-  const { name } = await req.json()
-  const data = {
-    message: `Hello ${name}!`,
+  // Lidar com requisições OPTIONS (preflight)
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
   }
 
-  return new Response(
-    JSON.stringify(data),
-    { headers: { "Content-Type": "application/json" } },
-  )
-})
+  try {
+    // Extrair o ID do orçamento da URL
+    const url = new URL(req.url);
+    const pathParts = url.pathname.split('/');
+    const budgetId = pathParts[pathParts.length - 1];
 
-/* To invoke locally:
+    if (!budgetId) {
+      return new Response(
+        JSON.stringify({ error: 'ID do orçamento não fornecido' }),
+        { status: 400, headers: corsHeaders }
+      );
+    }
 
-  1. Run `supabase start` (see: https://supabase.com/docs/reference/cli/supabase-start)
-  2. Make an HTTP request:
+    // Verificar autenticação
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Não autorizado' }),
+        { status: 401, headers: corsHeaders }
+      );
+    }
 
-  curl -i --location --request POST 'http://127.0.0.1:54321/functions/v1/generate-budget-pdf' \
-    --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0' \
-    --header 'Content-Type: application/json' \
-    --data '{"name":"Functions"}'
+    // Aqui você implementaria a lógica para gerar o PDF
+    // Por enquanto, vamos apenas retornar uma resposta de sucesso
+    const data = {
+      message: `PDF para orçamento ${budgetId} gerado com sucesso!`,
+      budgetId: budgetId,
+    };
+
+    return new Response(
+      JSON.stringify(data),
+      { headers: corsHeaders }
+    );
+  } catch (error) {
+    console.error('Erro ao gerar PDF:', error);
+    
+    return new Response(
+      JSON.stringify({ error: 'Erro ao gerar o PDF' }),
+      { status: 500, headers: corsHeaders }
+    );
+  }
+});
+
+/* Para invocar localmente:
+
+  1. Execute `supabase start` (veja: https://supabase.com/docs/reference/cli/supabase-start)
+  2. Faça uma requisição HTTP:
+
+  curl -i --location --request GET 'http://127.0.0.1:54321/functions/v1/generate-budget-pdf/123' \
+    --header 'Authorization: Bearer SEU_TOKEN_AQUI'
 
 */

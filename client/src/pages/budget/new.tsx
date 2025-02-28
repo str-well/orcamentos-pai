@@ -452,7 +452,10 @@ export default function NewBudget() {
                   <div>
                     <Label>Total do Orçamento</Label>
                     <p className="mt-2 text-lg font-bold">
-                      R$ {calculateTotals(form.watch()) + Number(form.watch("laborCost"))}
+                      {(() => {
+                        const totals = calculateTotals(form.watch());
+                        return `R$ ${totals.servicesTotal + totals.materialsTotal + Number(form.watch("laborCost"))}`;
+                      })()}
                     </p>
                   </div>
                 </div>

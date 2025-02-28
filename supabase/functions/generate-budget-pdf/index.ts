@@ -5,6 +5,7 @@
 // Setup type definitions for built-in Supabase Runtime APIs
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7"
+import { jsPDF } from "https://esm.sh/jspdf@2.5.1"
 import { Buffer } from "https://deno.land/std@0.208.0/io/buffer.ts";
 
 console.log("Generate Budget PDF Function Started!")
@@ -181,36 +182,62 @@ Deno.serve(async (req) => {
   }
 });
 
-// Função para gerar o PDF (simulação)
+// Função para gerar o PDF usando jsPDF
 async function generatePDF(budget: Budget): Promise<Uint8Array> {
-  // Aqui você usaria uma biblioteca como PDFKit ou jsPDF para gerar o PDF
-  // Por enquanto, vamos apenas criar um buffer com texto simples
+  const doc = new jsPDF();
   
-  // Simulação de conteúdo PDF
-  const pdfText = `
-    ORÇAMENTO #${budget.id}
-    
-    Cliente: ${budget.client_name}
-    Endereço: ${budget.client_address}, ${budget.client_city}
-    Contato: ${budget.client_contact}
-    
-    Local do Serviço: ${budget.work_location}
-    Tipo de Serviço: ${budget.service_type}
-    Data: ${budget.date}
-    
-    SERVIÇOS:
-    ${budget.services.map(s => `- ${s.name}: ${s.quantity} x R$ ${s.unitPrice} = R$ ${s.total}`).join('\n')}
-    
-    MATERIAIS:
-    ${budget.materials.map(m => `- ${m.name}: ${m.quantity} x R$ ${m.unitPrice} = R$ ${m.total}`).join('\n')}
-    
-    Custo de Mão de Obra: R$ ${budget.labor_cost}
-    
-    TOTAL: R$ ${budget.total_cost}
-  `;
+  // Configurar fonte para suportar caracteres especiais
+  doc.setFont("helvetica");
   
-  // Converter texto para Uint8Array
-  return new TextEncoder().encode(pdfText);
+  // Título
+  doc.setFontSize(18);
+  doc.text(`ORÇAMENTO #${budget.id}`, 20, 20);
+  
+  // Informações do Cliente
+  doc.setFontSize(12);
+  doc.text(`Cliente: ${budget.client_name}`, 20, 40);
+  doc.text(`Endereço: ${budget.client_address}, ${budget.client_city}`, 20, 50);
+  doc.text(`Contato: ${budget.client_contact}`, 20, 60);
+  
+  // Informações do Serviço
+  doc.text(`Local do Serviço: ${budget.work_location}`, 20, 80);
+  doc.text(`Tipo de Serviço: ${budget.service_type}`, 20, 90);
+  doc.text(`Data: ${budget.date}`, 20, 100);
+  
+  // Serviços
+  let yPos = 120;
+  doc.setFontSize(14);
+  doc.text("SERVIÇOS:", 20, yPos);
+  doc.setFontSize(12);
+  yPos += 10;
+  
+  budget.services.forEach(service => {
+    doc.text(`- ${service.name}: ${service.quantity} x R$ ${service.unitPrice} = R$ ${service.total}`, 20, yPos);
+    yPos += 10;
+  });
+  
+  // Materiais
+  yPos += 10;
+  doc.setFontSize(14);
+  doc.text("MATERIAIS:", 20, yPos);
+  doc.setFontSize(12);
+  yPos += 10;
+  
+  budget.materials.forEach(material => {
+    doc.text(`- ${material.name}: ${material.quantity} x R$ ${material.unitPrice} = R$ ${material.total}`, 20, yPos);
+    yPos += 10;
+  });
+  
+  // Totais
+  yPos += 10;
+  doc.text(`Custo de Mão de Obra: R$ ${budget.labor_cost}`, 20, yPos);
+  yPos += 20;
+  doc.setFontSize(14);
+  doc.text(`TOTAL: R$ ${budget.total_cost}`, 20, yPos);
+  
+  // Converter o PDF para Uint8Array
+  const pdfBytes = doc.output('arraybuffer');
+  return new Uint8Array(pdfBytes);
 }
 
 /* Para invocar localmente:

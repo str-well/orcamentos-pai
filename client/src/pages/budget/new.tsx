@@ -30,6 +30,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useBudgets } from "@/hooks/use-budgets";
+import { Budget } from "@shared/schema";
 
 interface BudgetItem {
   name: string;
@@ -107,23 +108,20 @@ export default function NewBudget() {
   });
 
   const createBudgetMutation = useMutation({
-    mutationFn: async (data: BudgetFormData) => {
-      await createBudget(data);
-    },
+    mutationFn: (budget: Omit<Budget, "id" | "created_at">) => createBudget(budget),
     onSuccess: () => {
       toast({
-        title: "Sucesso!",
-        description: "Orçamento criado com sucesso.",
+        title: "Sucesso",
+        description: "Orçamento criado com sucesso",
       });
       setLocation("/budgets");
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast({
+        title: "Erro",
+        description: error.message,
         variant: "destructive",
-        title: "Erro!",
-        description: "Erro ao criar orçamento. Tente novamente.",
       });
-      console.error("Erro ao criar orçamento:", error);
     },
   });
 
@@ -145,7 +143,13 @@ export default function NewBudget() {
     const { servicesTotal, materialsTotal } = calculateTotals(data);
 
     const budgetData = {
-      ...data,
+      client_name: data.clientName,
+      client_address: data.clientAddress,
+      client_city: data.clientCity,
+      client_contact: data.clientContact,
+      work_location: data.workLocation,
+      service_type: data.serviceType,
+      date: data.date,
       services: data.services.map(service => ({
         ...service,
         total: service.quantity * service.unitPrice
@@ -154,9 +158,11 @@ export default function NewBudget() {
         ...material,
         total: material.quantity * material.unitPrice
       })),
-      totalCost: String(servicesTotal + materialsTotal + Number(data.laborCost))
+      labor_cost: Number(data.laborCost),
+      total_cost: servicesTotal + materialsTotal + Number(data.laborCost)
     };
 
+    console.log('Dados enviados para criação:', budgetData);
     createBudgetMutation.mutate(budgetData);
   };
 

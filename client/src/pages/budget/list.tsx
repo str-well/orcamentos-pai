@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Link } from "wouter";
-import { Loader2, FileText, Plus, Eye } from "lucide-react";
+import { Loader2, FileText, Plus, Eye, Pencil, MoreVertical, Trash2, Share2 } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
@@ -27,6 +27,42 @@ import { ptBR } from "date-fns/locale";
 import { Label } from "@/components/ui/label";
 import { useBudgets } from "@/hooks/use-budgets";
 import { supabase } from "@/lib/supabase";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+const formatCurrency = (value: number) => {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
+  }).format(value);
+};
+
+const createWhatsAppMessage = (budget: Budget) => {
+  const materialsTotal = budget.materials.reduce((acc, material) =>
+    acc + (material.quantity * material.unitPrice), 0);
+
+  const message = `Olá! Segue o orçamento solicitado:\n\n`
+    + `*Orçamento #${budget.id}*\n`
+    + `Cliente: ${budget.client_name}\n`
+    + `Tipo de Serviço: ${budget.service_type}\n`
+    + `Local: ${budget.work_location}\n`
+    + `Materiais: ${formatCurrency(materialsTotal)}\n`
+    + `Valor Total com materiais e mão de obra: ${formatCurrency(Number(budget.total_cost))}\n\n`
+    + `Você pode acessar o PDF completo aqui: ${budget.pdf_url}\n\n`
+    + `Agradeço a preferência!`;
+
+  return encodeURIComponent(message);
+};
+
+const sharePDF = (budget: Budget) => {
+  const message = createWhatsAppMessage(budget);
+  window.open(`https://wa.me/?text=${message}`, '_blank');
+};
 
 export default function BudgetList() {
   const { toast } = useToast();
@@ -42,36 +78,12 @@ export default function BudgetList() {
   });
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-  const { budgets, isLoading, deleteBudget } = useBudgets();
+  const { budgets, isLoading, deleteBudget, updateBudgetStatus } = useBudgets();
 
   const updateStatusMutation = useMutation({
-    mutationFn: async ({
-      id,
-      status,
-    }: {
-      id: number;
-      status: "approved" | "rejected";
-    }) => {
-      const { data: { session } } = await supabase.auth.getSession();
-
-      const res = await fetch(`https://dbxabmijgyxuazvdelpx.supabase.co/functions/v1/update-budget-status/${id}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token}`
-        },
-        body: JSON.stringify({ status }),
-      });
-
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.message || 'Falha ao atualizar status');
-      }
-
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["budgets"] });
+    mutationFn: ({ id, status }: { id: number; status: "approved" | "rejected" }) =>
+      updateBudgetStatus(id, status),
+    onSuccess: (data) => {
       toast({
         title: "Sucesso",
         description: "Status do orçamento atualizado com sucesso",
@@ -110,6 +122,15 @@ export default function BudgetList() {
       if (data.pdfUrl) {
         // Abrir o PDF em uma nova aba
         window.open(data.pdfUrl, '_blank');
+        // Atualizar o cache do React Query para incluir a nova URL do PDF
+        queryClient.setQueryData(['budgets'], (oldData: Budget[] | undefined) => {
+          if (!oldData) return oldData;
+          return oldData.map(b =>
+            b.id === budget.id
+              ? { ...b, pdf_url: data.pdfUrl }
+              : b
+          );
+        });
       } else {
         throw new Error('URL do PDF não disponível');
       }
@@ -230,7 +251,7 @@ export default function BudgetList() {
                         />
                       </PopoverContent>
                     </Popover>
-                    
+
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button variant="outline" className="w-full sm:w-[150px] pl-3 text-left font-normal justify-between">
@@ -327,13 +348,25 @@ export default function BudgetList() {
                                   <Eye className="h-4 w-4" />
                                 </Button>
                               </motion.div>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => generatePDF(budget)}
-                              >
-                                <FileText className="h-4 w-4" />
-                              </Button>
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => generatePDF(budget)}
+                                >
+                                  <FileText className="h-4 w-4" />
+                                </Button>
+                                {budget.pdf_url && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => sharePDF(budget)}
+                                    className="text-green-600 hover:text-green-700"
+                                  >
+                                    <Share2 className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </div>
                               {budget.status === "pending" && (
                                 <>
                                   <Button
@@ -361,6 +394,36 @@ export default function BudgetList() {
                                   </Button>
                                 </>
                               )}
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon">
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem asChild>
+                                    <Link
+                                      to={`/budgets/edit/${budget.id}`}
+                                      className="flex items-center"
+                                    >
+                                      <Pencil className="mr-2 h-4 w-4" />
+                                      <span>Editar</span>
+                                    </Link>
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    onClick={() => {
+                                      if (window.confirm('Tem certeza que deseja excluir este orçamento?')) {
+                                        deleteBudget(budget.id)
+                                      }
+                                    }}
+                                    className="text-red-600"
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    <span>Excluir</span>
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </div>
                           </td>
                         </motion.tr>

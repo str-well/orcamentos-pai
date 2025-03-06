@@ -51,7 +51,7 @@ export function Header() {
             whileTap={{ scale: 0.98 }}
             transition={{ duration: 0.3 }}
           >
-            JH Serviços
+            CotaHub
           </motion.h1>
 
           {/* Desktop Navigation */}
@@ -76,7 +76,9 @@ export function Header() {
                     variant="outline"
                     className={cn(
                       "transition-colors duration-200",
-                      isActive(link.href) && "bg-black text-white hover:bg-black/90"
+                      isActive(link.href)
+                        ? "bg-black text-white hover:bg-black/80 hover:text-white"
+                        : "hover:bg-gray-100"
                     )}
                     asChild
                   >
@@ -128,7 +130,9 @@ export function Header() {
                       variant="ghost"
                       className={cn(
                         "justify-start rounded-none h-12 px-6",
-                        isActive(link.href) && "bg-black text-white hover:bg-black/90"
+                        isActive(link.href)
+                          ? "bg-black text-white hover:bg-black/80 hover:text-white"
+                          : "hover:bg-gray-100"
                       )}
                       asChild
                       onClick={() => setIsOpen(false)}

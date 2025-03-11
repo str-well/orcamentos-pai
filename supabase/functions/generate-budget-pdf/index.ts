@@ -368,7 +368,7 @@ async function generatePDF(budget: Budget): Promise<Uint8Array> {
       doc.text('ORÇAMENTO', 15, 55);
       doc.setFontSize(16);
       doc.setFont("helvetica", "bold");
-      doc.text(`#${budget.id}`, 15, 67);
+      doc.text(`${budget.client_name}`, 15, 67);
 
       // Status (compacto)
       const statusText = budget.status === 'pending' ? 'PENDENTE' :
@@ -502,6 +502,7 @@ async function generatePDF(budget: Budget): Promise<Uint8Array> {
       doc.setFont("helvetica", "normal");
       doc.text('Este orçamento é válido por 15 dias. Após este período, os valores podem sofrer alterações.', doc.internal.pageSize.width / 2, footerY + 5, { align: 'center' });
       doc.text('JH Serviços © ' + new Date().getFullYear(), doc.internal.pageSize.width / 2, footerY + 10, { align: 'center' });
+      
 
       console.log('PDF gerado com sucesso');
       const pdfBytes = doc.output('arraybuffer');

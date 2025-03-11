@@ -297,6 +297,14 @@ function validateBudget(budget: Budget): void {
   console.log('Validação do orçamento concluída com sucesso');
 }
 
+// Função auxiliar para formatar valores monetários
+function formatCurrency(value: number): string {
+  return value.toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+}
+
 // Função para gerar o PDF usando jsPDF
 async function generatePDF(budget: Budget): Promise<Uint8Array> {
   try {
@@ -392,7 +400,7 @@ async function generatePDF(budget: Budget): Promise<Uint8Array> {
       const infoGrid = [
         ['Cliente:', budget.client_name, 'Data:', new Date(budget.date).toLocaleDateString('pt-BR')],
         ['Endereço:', budget.client_address, 'Local:', budget.work_location],
-        ['Cidade:', budget.client_city, 'Tipo:', budget.service_type]
+        ['Cidade:', budget.client_city, 'Tipo de serviço:', budget.service_type]
       ];
 
       let yPos = clientY + 20;
@@ -439,8 +447,8 @@ async function generatePDF(budget: Budget): Promise<Uint8Array> {
           doc.setFont("helvetica", "normal");
           doc.text(item.name.substring(0, 40), 12, currentY + 6);
           doc.text(item.quantity.toString(), 100, currentY + 6);
-          doc.text(`R$ ${item.unitPrice.toFixed(2)}`, 130, currentY + 6);
-          doc.text(`R$ ${item.total.toFixed(2)}`, doc.internal.pageSize.width - 25, currentY + 6);
+          doc.text(`R$ ${formatCurrency(item.unitPrice)}`, 130, currentY + 6);
+          doc.text(`R$ ${formatCurrency(item.total)}`, doc.internal.pageSize.width - 25, currentY + 6);
 
           currentY += 8;
         });
@@ -471,7 +479,7 @@ async function generatePDF(budget: Budget): Promise<Uint8Array> {
       doc.setFontSize(10);
       doc.text('Mão de Obra:', totalsX + 10, yPos + 15);
       doc.setTextColor(COLORS.text);
-      doc.text(`R$ ${Number(budget.labor_cost).toFixed(2)}`, totalsX + totalsWidth - 10, yPos + 15, { align: 'right' });
+      doc.text(`R$ ${formatCurrency(Number(budget.labor_cost))}`, totalsX + totalsWidth - 10, yPos + 15, { align: 'right' });
 
       doc.setDrawColor(COLORS.border);
       doc.line(totalsX + 10, yPos + 20, totalsX + totalsWidth - 10, yPos + 20);
@@ -480,7 +488,7 @@ async function generatePDF(budget: Budget): Promise<Uint8Array> {
       doc.setFontSize(12);
       doc.setFont("helvetica", "bold");
       doc.text('TOTAL:', totalsX + 10, yPos + 35);
-      doc.text(`R$ ${Number(budget.total_cost).toFixed(2)}`, totalsX + totalsWidth - 10, yPos + 35, { align: 'right' });
+      doc.text(`R$ ${formatCurrency(Number(budget.total_cost))}`, totalsX + totalsWidth - 10, yPos + 35, { align: 'right' });
 
       /* ------------------------------------------------------------------
        * Rodapé (compacto)

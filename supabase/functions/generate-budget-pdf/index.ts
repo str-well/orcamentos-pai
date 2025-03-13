@@ -56,6 +56,7 @@ interface Budget {
   labor_cost: string;
   total_cost: string;
   status: string;
+  labor_cost_with_materials?: string;
 }
 
 Deno.serve(async (req) => {
@@ -370,16 +371,6 @@ async function generatePDF(budget: Budget): Promise<Uint8Array> {
       doc.setFont("helvetica", "bold");
       doc.text(`${budget.client_name}`, 15, 67);
 
-      // Status (compacto)
-      const statusText = budget.status === 'pending' ? 'PENDENTE' :
-                        budget.status === 'approved' ? 'APROVADO' : 'REJEITADO';
-      
-      doc.setFillColor(getStatusColor(budget.status));
-      doc.rect(doc.internal.pageSize.width - 70, 45, 60, 20, 'F');
-      doc.setTextColor('white');
-      doc.setFontSize(10);
-      doc.text(statusText, doc.internal.pageSize.width - 40, 57, { align: 'center' });
-
       /* ------------------------------------------------------------------
        * Informações do Cliente (compactas)
        * ------------------------------------------------------------------ */
@@ -412,7 +403,7 @@ async function generatePDF(budget: Budget): Promise<Uint8Array> {
         doc.setFont("helvetica", "bold");
         doc.text(row[2], 120, yPos);
         doc.setFont("helvetica", "normal");
-        doc.text(row[3], 140, yPos);
+        doc.text(row[3], 160, yPos);
         yPos += 10;
       });
 
@@ -432,8 +423,12 @@ async function generatePDF(budget: Budget): Promise<Uint8Array> {
         doc.setTextColor('white');
         doc.setFontSize(8);
         doc.text('Item', 12, headerY + 6);
-        doc.text('Qtd', 100, headerY + 6);
-        doc.text('Valor Unit.', 130, headerY + 6);
+        if (items.some(item => item.quantity)) {
+          doc.text('Qtd', 100, headerY + 6);
+        }
+        if (items.some(item => item.unitPrice)) {
+          doc.text('Valor Unit.', 130, headerY + 6);
+        }
         doc.text('Total', doc.internal.pageSize.width - 25, headerY + 6);
 
         let currentY = headerY + 8;
@@ -446,8 +441,12 @@ async function generatePDF(budget: Budget): Promise<Uint8Array> {
           doc.setTextColor(COLORS.text);
           doc.setFont("helvetica", "normal");
           doc.text(item.name.substring(0, 40), 12, currentY + 6);
-          doc.text(item.quantity.toString(), 100, currentY + 6);
-          doc.text(`R$ ${formatCurrency(item.unitPrice)}`, 130, currentY + 6);
+          if (item.quantity) {
+            doc.text(item.quantity.toString(), 100, currentY + 6);
+          }
+          if (item.unitPrice) {
+            doc.text(`R$ ${formatCurrency(item.unitPrice)}`, 130, currentY + 6);
+          }
           doc.text(`R$ ${formatCurrency(item.total)}`, doc.internal.pageSize.width - 25, currentY + 6);
 
           currentY += 8;
@@ -489,6 +488,13 @@ async function generatePDF(budget: Budget): Promise<Uint8Array> {
       doc.setFont("helvetica", "bold");
       doc.text('TOTAL:', totalsX + 10, yPos + 35);
       doc.text(`R$ ${formatCurrency(Number(budget.total_cost))}`, totalsX + totalsWidth - 10, yPos + 35, { align: 'right' });
+
+      // Adicionar campo para 'Valor de mão de obra com materiais'
+      doc.setTextColor(COLORS.textLight);
+      doc.setFontSize(10);
+      doc.text('Valor de Mão de Obra com Materiais:', totalsX + 10, yPos + 25);
+      doc.setTextColor(COLORS.text);
+      doc.text(`R$ ${formatCurrency(Number(budget.labor_cost_with_materials))}`, totalsX + totalsWidth - 10, yPos + 25, { align: 'right' });
 
       /* ------------------------------------------------------------------
        * Rodapé (compacto)

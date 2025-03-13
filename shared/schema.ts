@@ -31,6 +31,7 @@ export const budgets = pgTable("budgets", {
     total: number;
   }>>().default([]),
   labor_cost: text("labor_cost").notNull(),
+  labor_cost_with_materials: text("labor_cost_with_materials"),
   total_cost: text("total_cost").notNull(),
   status: text("status").notNull().default('pending'),
   created_at: timestamp("created_at").notNull().defaultNow(),
@@ -69,6 +70,7 @@ export const insertBudgetSchema = z.object({
   services: z.array(budgetItemSchema),
   materials: z.array(budgetItemSchema),
   laborCost: z.string(),
+  laborCostWithMaterials: z.string().optional(),
   totalCost: z.string()
 });
 
@@ -102,6 +104,7 @@ export type Budget = {
     total: number;
   }>;
   labor_cost: string;
+  labor_cost_with_materials?: string;
   total_cost: string;
   status: 'pending' | 'approved' | 'rejected';
   created_at: string;

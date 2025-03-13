@@ -50,6 +50,7 @@ interface BudgetFormData {
   workLocation: string;
   serviceType: string;
   laborCost: string;
+  laborCostWithMaterials: string;
   totalCost: string;
 }
 
@@ -93,6 +94,7 @@ export default function NewBudget() {
       services: [],
       materials: [],
       laborCost: "0",
+      laborCostWithMaterials: "0",
       totalCost: "0",
     },
   });
@@ -142,7 +144,7 @@ export default function NewBudget() {
   const onSubmit = (data: BudgetFormData) => {
     const { servicesTotal, materialsTotal } = calculateTotals(data);
 
-    const budgetData = {
+    const budgetData: Omit<Budget, "id" | "created_at"> = {
       client_name: data.clientName,
       client_address: data.clientAddress,
       client_city: data.clientCity,
@@ -158,8 +160,11 @@ export default function NewBudget() {
         ...material,
         total: material.quantity * material.unitPrice
       })),
-      labor_cost: Number(data.laborCost),
-      total_cost: servicesTotal + materialsTotal + Number(data.laborCost)
+      labor_cost: data.laborCost,
+      labor_cost_with_materials: data.laborCostWithMaterials !== "0" ? data.laborCostWithMaterials : undefined,
+      total_cost: (servicesTotal + materialsTotal + Number(data.laborCost)).toString(),
+      status: "pending" as const,
+      user_id: ""
     };
 
     console.log('Dados enviados para criação:', budgetData);
@@ -441,19 +446,35 @@ export default function NewBudget() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="laborCost">Mão de Obra</Label>
-                    <Input
-                      id="laborCost"
-                      type="number"
-                      step="0.01"
-                      {...form.register("laborCost")}
-                      className="mt-1"
-                      onChange={(e) => {
-                        const laborCost = parseFloat(e.target.value);
-                        form.setValue("laborCost", laborCost.toString());
-                      }}
-                    />
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="laborCost">Mão de Obra</Label>
+                      <Input
+                        id="laborCost"
+                        type="number"
+                        step="0.01"
+                        {...form.register("laborCost")}
+                        className="mt-1"
+                        onChange={(e) => {
+                          const laborCost = parseFloat(e.target.value);
+                          form.setValue("laborCost", laborCost.toString());
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="laborCostWithMaterials">Mão de Obra com Materiais</Label>
+                      <Input
+                        id="laborCostWithMaterials"
+                        type="number"
+                        step="0.01"
+                        {...form.register("laborCostWithMaterials")}
+                        className="mt-1"
+                        onChange={(e) => {
+                          const laborCostWithMaterials = parseFloat(e.target.value);
+                          form.setValue("laborCostWithMaterials", laborCostWithMaterials.toString());
+                        }}
+                      />
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <div>

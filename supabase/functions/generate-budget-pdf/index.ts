@@ -489,12 +489,14 @@ async function generatePDF(budget: Budget): Promise<Uint8Array> {
       doc.text('TOTAL:', totalsX + 10, yPos + 35);
       doc.text(`R$ ${formatCurrency(Number(budget.total_cost))}`, totalsX + totalsWidth - 10, yPos + 35, { align: 'right' });
 
-      // Adicionar campo para 'Valor de mão de obra com materiais'
-      doc.setTextColor(COLORS.textLight);
-      doc.setFontSize(10);
-      doc.text('Valor de Mão de Obra com Materiais:', totalsX + 10, yPos + 25);
-      doc.setTextColor(COLORS.text);
-      doc.text(`R$ ${formatCurrency(Number(budget.labor_cost_with_materials))}`, totalsX + totalsWidth - 10, yPos + 25, { align: 'right' });
+      // Adicionar campo para 'Valor de mão de obra com materiais' apenas se existir
+      if (budget.labor_cost_with_materials) {
+        doc.setTextColor(COLORS.textLight);
+        doc.setFontSize(10);
+        doc.text('Valor de Mão de Obra com Materiais:', totalsX + 10, yPos + 25);
+        doc.setTextColor(COLORS.text);
+        doc.text(`R$ ${formatCurrency(Number(budget.labor_cost_with_materials))}`, totalsX + totalsWidth - 10, yPos + 25, { align: 'right' });
+      }
 
       /* ------------------------------------------------------------------
        * Rodapé (compacto)

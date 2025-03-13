@@ -57,8 +57,9 @@ export function useBudgets() {
             date: budget.date,
             services: budget.services || [],
             materials: budget.materials || [],
-            labor_cost: Number(budget.labor_cost) || 0,
-            total_cost: Number(budget.total_cost) || 0,
+            labor_cost: budget.labor_cost,
+            labor_cost_with_materials: budget.labor_cost_with_materials,
+            total_cost: budget.total_cost,
             user_id: session.user.id,
             status: "pending",
         };

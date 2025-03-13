@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useBudgets } from "@/hooks/use-budgets";
 import { Budget } from "@shared/schema";
+import { supabase } from "@/lib/supabase";
 
 interface BudgetItem {
   name: string;
@@ -79,7 +80,7 @@ function FieldLabel({ label, tooltip }: { label: string; tooltip: string }) {
 export default function NewBudget() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
-  const { createBudget } = useBudgets();
+  const { createBudget, checkTableStructure } = useBudgets();
 
   const form = useForm<BudgetFormData>({
     resolver: zodResolver(insertBudgetSchema),
@@ -144,6 +145,11 @@ export default function NewBudget() {
   const onSubmit = (data: BudgetFormData) => {
     const { servicesTotal, materialsTotal } = calculateTotals(data);
 
+    // Calcular o total incluindo mão de obra com materiais, se fornecido
+    const laborCost = Number(data.laborCost) || 0;
+    const laborCostWithMaterials = Number(data.laborCostWithMaterials) || 0;
+    const totalCost = servicesTotal + materialsTotal + laborCost;
+
     const budgetData: Omit<Budget, "id" | "created_at"> = {
       client_name: data.clientName,
       client_address: data.clientAddress,
@@ -161,13 +167,17 @@ export default function NewBudget() {
         total: material.quantity * material.unitPrice
       })),
       labor_cost: data.laborCost,
-      labor_cost_with_materials: data.laborCostWithMaterials !== "0" ? data.laborCostWithMaterials : undefined,
-      total_cost: (servicesTotal + materialsTotal + Number(data.laborCost)).toString(),
+      // Garantir que o campo seja enviado apenas se tiver um valor diferente de zero
+      labor_cost_with_materials: data.laborCostWithMaterials && data.laborCostWithMaterials !== "0" ? data.laborCostWithMaterials : undefined,
+      total_cost: totalCost.toString(),
       status: "pending" as const,
       user_id: ""
     };
 
     console.log('Dados enviados para criação:', budgetData);
+    console.log('labor_cost_with_materials presente?', 'labor_cost_with_materials' in budgetData);
+    console.log('Valor de labor_cost_with_materials:', budgetData.labor_cost_with_materials);
+
     createBudgetMutation.mutate(budgetData);
   };
 
@@ -500,7 +510,8 @@ export default function NewBudget() {
                       <p className="mt-1 text-lg font-bold">
                         {(() => {
                           const totals = calculateTotals(form.watch());
-                          return `R$ ${(totals.servicesTotal + totals.materialsTotal + Number(form.watch("laborCost"))).toFixed(2)}`;
+                          const laborCost = Number(form.watch("laborCost")) || 0;
+                          return `R$ ${(totals.servicesTotal + totals.materialsTotal + laborCost).toFixed(2)}`;
                         })()}
                       </p>
                     </div>
@@ -515,6 +526,70 @@ export default function NewBudget() {
                   onClick={() => setLocation("/budgets")}
                 >
                   Cancelar
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={async () => {
+                    try {
+                      await checkTableStructure();
+
+                      // Teste direto de inserção
+                      const { data: { session } } = await supabase.auth.getSession();
+                      if (!session?.user) {
+                        toast({
+                          title: "Erro",
+                          description: "Usuário não autenticado",
+                          variant: "destructive",
+                        });
+                        return;
+                      }
+
+                      const testData = {
+                        client_name: "Teste Direto",
+                        client_address: "Endereço Teste",
+                        client_city: "Cidade Teste",
+                        client_contact: "Contato Teste",
+                        work_location: "Local Teste",
+                        service_type: "Serviço Teste",
+                        date: new Date().toISOString().split('T')[0],
+                        services: [],
+                        materials: [],
+                        labor_cost: "100",
+                        labor_cost_with_materials: "200",
+                        total_cost: "300",
+                        user_id: session.user.id,
+                        status: "pending"
+                      };
+
+                      console.log("Tentando inserção direta:", testData);
+
+                      const { data, error } = await supabase
+                        .from("budgets")
+                        .insert([testData])
+                        .select()
+                        .single();
+
+                      if (error) {
+                        console.error("Erro na inserção direta:", error);
+                        toast({
+                          title: "Erro",
+                          description: `Erro na inserção direta: ${error.message}`,
+                          variant: "destructive",
+                        });
+                      } else {
+                        console.log("Inserção direta bem-sucedida:", data);
+                        toast({
+                          title: "Sucesso",
+                          description: "Inserção direta bem-sucedida",
+                        });
+                      }
+                    } catch (error) {
+                      console.error("Erro ao verificar estrutura:", error);
+                    }
+                  }}
+                >
+                  Verificar Estrutura
                 </Button>
                 <Button
                   type="submit"

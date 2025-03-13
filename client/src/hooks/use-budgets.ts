@@ -25,6 +25,9 @@ export function useBudgets() {
     const createBudget = async (budget: Omit<Budget, "id" | "created_at">) => {
         const { data: { session } } = await supabase.auth.getSession();
         
+        console.log('Budget recebido:', JSON.stringify(budget, null, 2));
+        console.log('labor_cost_with_materials presente?', 'labor_cost_with_materials' in budget);
+        
         if (!session?.user) {
             throw new Error("Usuário não autenticado");
         }
@@ -46,29 +49,43 @@ export function useBudgets() {
             throw new Error(`Campos obrigatórios faltando: ${missingFields.join(', ')}`);
         }
 
-        // Converter camelCase para snake_case
+        // Criar uma cópia explícita do objeto budget para garantir que todos os campos sejam incluídos
+        const budgetCopy = { ...budget };
+        
+        // Converter camelCase para snake_case e garantir que todos os campos sejam incluídos
         const formattedBudget = {
-            client_name: budget.client_name,
-            client_address: budget.client_address,
-            client_city: budget.client_city,
-            client_contact: budget.client_contact,
-            work_location: budget.work_location,
-            service_type: budget.service_type,
-            date: budget.date,
-            services: budget.services || [],
-            materials: budget.materials || [],
-            labor_cost: budget.labor_cost,
-            labor_cost_with_materials: budget.labor_cost_with_materials,
-            total_cost: budget.total_cost,
+            client_name: budgetCopy.client_name,
+            client_address: budgetCopy.client_address,
+            client_city: budgetCopy.client_city,
+            client_contact: budgetCopy.client_contact,
+            work_location: budgetCopy.work_location,
+            service_type: budgetCopy.service_type,
+            date: budgetCopy.date,
+            services: budgetCopy.services || [],
+            materials: budgetCopy.materials || [],
+            labor_cost: budgetCopy.labor_cost,
+            // Garantir que o campo seja incluído mesmo que seja undefined
+            labor_cost_with_materials: budgetCopy.labor_cost_with_materials,
+            total_cost: budgetCopy.total_cost,
             user_id: session.user.id,
             status: "pending",
         };
 
-        console.log('Dados formatados para envio:', formattedBudget);
+        console.log('Dados formatados para envio:', JSON.stringify(formattedBudget, null, 2));
+        console.log('labor_cost_with_materials incluído?', 'labor_cost_with_materials' in formattedBudget);
+        console.log('Valor de labor_cost_with_materials:', formattedBudget.labor_cost_with_materials);
+
+        // Teste direto com o campo explícito
+        const insertData = {
+            ...formattedBudget,
+            labor_cost_with_materials: budgetCopy.labor_cost_with_materials
+        };
+        
+        console.log('Dados finais para inserção:', JSON.stringify(insertData, null, 2));
 
         const { data, error } = await supabase
             .from("budgets")
-            .insert([formattedBudget])
+            .insert([insertData])
             .select()
             .single();
 
@@ -148,11 +165,27 @@ export function useBudgets() {
         return data;
     };
 
+    const checkTableStructure = async () => {
+        try {
+            const { data, error } = await supabase.rpc('get_table_structure', { table_name: 'budgets' });
+            if (error) {
+                console.error('Erro ao verificar estrutura da tabela:', error);
+                return null;
+            }
+            console.log('Estrutura da tabela budgets:', data);
+            return data;
+        } catch (error) {
+            console.error('Erro ao verificar estrutura da tabela:', error);
+            return null;
+        }
+    };
+
     return {
         budgets,
         isLoading,
         deleteBudget,
         updateBudgetStatus,
         createBudget,
+        checkTableStructure,
     };
 } 
